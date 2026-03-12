@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="row justify-content-center text-center mb-5">
+
+        <div class="col-lg-8">
+
+            <h1 class="fw-bold mb-3">
+                Gerencie sua empresa com o <span class="text-primary">ServHub</span>
+            </h1>
+
+            <p class="text-muted mb-4">
+                Controle clientes, serviços e relatórios em um único sistema simples,
+                rápido e acessível de qualquer lugar.
+            </p>
+
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                    Criar conta grátis
+                </a>
+
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg">
+                    Entrar
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="row text-center mb-5">
+
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold">Clientes</h5>
+                    <p class="text-muted">
+                        Cadastre e gerencie todos os seus clientes em um só lugar.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold">Serviços</h5>
+                    <p class="text-muted">
+                        Controle atendimentos e organize sua rotina de trabalho.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold">Relatórios</h5>
+                    <p class="text-muted">
+                        Tenha visão clara do desempenho da sua empresa.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="text-center mb-4">
+        <h2 class="fw-bold">Planos</h2>
+        <p class="text-muted">
+            Escolha o plano ideal para sua empresa
+        </p>
+    </div>
+
+
+    <div class="row">
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-0 h-100 text-center">
+                <div class="card-body">
+
+                    <h5 class="fw-bold">Starter</h5>
+
+                    <h2 class="my-3">
+                        R$29 <small class="text-muted fs-6">/mês</small>
+                    </h2>
+
+                    <p class="text-muted">
+                        Ideal para profissionais autônomos
+                    </p>
+
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary w-100">
+                        Começar
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow border-0 h-100 text-center">
+
+                <div class="card-body">
+
+                    <h5 class="fw-bold">Pro</h5>
+
+                    <h2 class="my-3">
+                        R$59 <small class="text-muted fs-6">/mês</small>
+                    </h2>
+
+                    <p class="text-muted">
+                        Para empresas em crescimento
+                    </p>
+
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary w-100">
+                        Começar
+                    </a>
+
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-0 h-100 text-center">
+
+                <div class="card-body">
+
+                    <h5 class="fw-bold">Business</h5>
+
+                    <h2 class="my-3">
+                        R$99 <small class="text-muted fs-6">/mês</small>
+                    </h2>
+
+                    <p class="text-muted">
+                        Para equipes maiores
+                    </p>
+
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary w-100">
+                        Começar
+                    </a>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

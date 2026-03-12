@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Dashboard</h2>
+        <p class="text-muted mb-0">Visão geral da sua empresa</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Empresa</p>
+                <h5 class="mb-0">{{ company.name }}</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Plano</p>
+                <h5 class="mb-0 text-capitalize">{{ company.plan }}</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Status</p>
+                {% if company.is_active %}
+                    <span class="badge text-bg-success">Ativa</span>
+                {% else %}
+                    <span class="badge text-bg-danger">Inativa</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Clientes</p>
+                <h3 class="mb-0">{{ total_customers }}</h3>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="mb-3">Informações da empresa</h5>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block">Nome</small>
+                    <span>{{ company.name }}</span>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block">Plano</small>
+                    <span class="text-capitalize">{{ company.plan }}</span>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block">Criada em</small>
+                    <span>{{ company.created_at.strftime('%d/%m/%Y') }}</span>
+                </div>
+
+                <div>
+                    <small class="text-muted d-block">Status</small>
+                    {% if company.is_active %}
+                        <span class="text-success">Empresa ativa</span>
+                    {% else %}
+                        <span class="text-danger">Empresa inativa</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="mb-3">Acesso rápido</h5>
+
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('customers.new_customer') }}" class="btn btn-primary">
+                        Novo Cliente
+                    </a>
+
+                    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-primary">
+                        Ver Clientes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

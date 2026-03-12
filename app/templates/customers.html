@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1">Clientes</h2>
+        <p class="text-muted mb-0">Gerencie os clientes cadastrados</p>
+    </div>
+
+    <a href="{{ url_for('customers.new_customer') }}" class="btn btn-primary">
+        Novo Cliente
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('customers.list_customers') }}">
+            <div class="row g-2">
+                <div class="col-12 col-md-8">
+                    <input
+                        type="text"
+                        name="search"
+                        class="form-control"
+                        placeholder="Buscar cliente pelo nome"
+                        value="{{ search or '' }}"
+                    >
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        Buscar
+                    </button>
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-secondary w-100">
+                        Limpar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+
+        {% if customers %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>E-mail</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>{{ customer.name }}</td>
+                        <td>{{ customer.phone }}</td>
+                        <td>{{ customer.email }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}"
+                               class="btn btn-sm btn-outline-primary">
+                                Editar
+                            </a>
+
+                            <form method="POST"
+                                  action="{{ url_for('customers.delete_customer', customer_id=customer.id) }}"
+                                  style="display:inline;"
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este cliente?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            Nenhum cliente encontrado.
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}
