@@ -8,9 +8,11 @@
         <p class="text-muted mb-0">Gerencie os clientes cadastrados</p>
     </div>
 
+    {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario'] %}
     <a href="{{ url_for('customers.new_customer') }}" class="btn btn-primary">
         Novo Cliente
     </a>
+    {% endif %}
 </div>
 
 <div class="card border-0 shadow-sm mb-3">
@@ -65,11 +67,15 @@
                         <td>{{ customer.phone }}</td>
                         <td>{{ customer.email }}</td>
                         <td class="text-end">
+
+                            {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario'] %}
                             <a href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}"
                                class="btn btn-sm btn-outline-primary">
                                 Editar
                             </a>
+                            {% endif %}
 
+                            {% if current_user.system_role == 'super_admin' or current_user.company_role == 'admin_empresa' %}
                             <form method="POST"
                                   action="{{ url_for('customers.delete_customer', customer_id=customer.id) }}"
                                   style="display:inline;"
@@ -78,6 +84,8 @@
                                     Excluir
                                 </button>
                             </form>
+                            {% endif %}
+
                         </td>
                     </tr>
                     {% endfor %}

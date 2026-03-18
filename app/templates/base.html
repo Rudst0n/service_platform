@@ -48,6 +48,17 @@
             color: white;
         }
 
+        .sidebar-user {
+            font-size: 0.9rem;
+            color: #adb5bd;
+            margin-bottom: 20px;
+            padding: 0 6px;
+        }
+
+        .sidebar-logout {
+            margin-top: 20px;
+        }
+
         .main-area {
             padding: 16px;
             padding-bottom: 90px;
@@ -62,10 +73,27 @@
             z-index: 1000;
         }
 
+        .topbar-mobile-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
         .topbar-title {
             font-size: 1.2rem;
             font-weight: 700;
             margin: 0;
+        }
+
+        .topbar-user {
+            font-size: 0.82rem;
+            color: #6c757d;
+            margin-right: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
         }
 
         .page-card {
@@ -141,18 +169,46 @@
     <aside class="sidebar">
         <div class="sidebar-title">ServHub</div>
 
+        {% if current_user.is_authenticated %}
+        <div class="sidebar-user">
+            {{ current_user.name }}
+        </div>
+        {% endif %}
+
         <nav class="nav flex-column">
             <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
             <a class="nav-link" href="{{ url_for('customers.list_customers') }}">Clientes</a>
+
+            {% if current_user.system_role == "super_admin" or current_user.company_role == "admin_empresa" %}
+            <a class="nav-link" href="{{ url_for('customers.list_users') }}">Usuários</a>
+            {% endif %}
+
             <a class="nav-link" href="#">Serviços</a>
             <a class="nav-link" href="#">Relatórios</a>
+
+            <div class="sidebar-logout">
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm w-100">
+                    Sair
+                </a>
+            </div>
         </nav>
     </aside>
     {% endif %}
 
     {% if request.endpoint != 'main.landing_page' and request.endpoint != 'auth.login' and request.endpoint != 'auth.register' %}
     <header class="topbar-mobile">
-        <h1 class="topbar-title">ServHub</h1>
+        <div class="topbar-mobile-inner">
+            <h1 class="topbar-title">ServHub</h1>
+
+            {% if current_user.is_authenticated %}
+            <div class="d-flex align-items-center">
+                <span class="topbar-user">{{ current_user.name }}</span>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm">
+                    Sair
+                </a>
+            </div>
+            {% endif %}
+        </div>
     </header>
     {% endif %}
 
@@ -188,10 +244,17 @@
             <span>Clientes</span>
         </a>
 
+        {% if current_user.system_role == "super_admin" or current_user.company_role == "admin_empresa" %}
+        <a href="{{ url_for('customers.list_users') }}">
+            <span class="bottom-nav-icon">👤</span>
+            <span>Usuários</span>
+        </a>
+        {% else %}
         <a href="#">
             <span class="bottom-nav-icon">🛠</span>
             <span>Serviços</span>
         </a>
+        {% endif %}
 
         <a href="#">
             <span class="bottom-nav-icon">📊</span>

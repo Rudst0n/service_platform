@@ -93,13 +93,23 @@
                 <h5 class="mb-3">Acesso rápido</h5>
 
                 <div class="d-grid gap-2">
+                    {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario'] %}
                     <a href="{{ url_for('customers.new_customer') }}" class="btn btn-primary">
                         Novo Cliente
                     </a>
+                    {% endif %}
 
+                    {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario', 'visualizador'] %}
                     <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-primary">
                         Ver Clientes
                     </a>
+                    {% endif %}
+
+                    {% if current_user.system_role == 'super_admin' or current_user.company_role == 'admin_empresa' %}
+                    <a href="{{ url_for('customers.list_users') }}" class="btn btn-outline-secondary">
+                        Gerenciar Usuários
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
