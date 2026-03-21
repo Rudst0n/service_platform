@@ -23,8 +23,17 @@
     <div class="col-12 col-md-6 col-xl-3">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <p class="text-muted mb-2">Plano</p>
-                <h5 class="mb-0 text-capitalize">{{ company.plan }}</h5>
+                <p class="text-muted mb-2">Clientes</p>
+                <h3 class="mb-0">{{ total_customers }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Usuários</p>
+                <h3 class="mb-0">{{ total_users }}</h3>
             </div>
         </div>
     </div>
@@ -33,54 +42,28 @@
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <p class="text-muted mb-2">Status</p>
-                {% if company.is_active %}
-                    <span class="badge text-bg-success">Ativa</span>
-                {% else %}
-                    <span class="badge text-bg-danger">Inativa</span>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <div class="col-12 col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body">
-                <p class="text-muted mb-2">Clientes</p>
-                <h3 class="mb-0">{{ total_customers }}</h3>
+                <h6 class="mb-0 text-success">Sistema ativo</h6>
             </div>
         </div>
     </div>
 
 </div>
 
-<div class="row g-3 mb-4">
-
+<div class="row g-3">
     <div class="col-12 col-lg-6">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <h5 class="mb-3">Informações da empresa</h5>
+                <h5 class="mb-3">Ações rápidas</h5>
 
-                <div class="mb-3">
-                    <small class="text-muted d-block">Nome</small>
-                    <span>{{ company.name }}</span>
-                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-primary">
+                        Ver clientes
+                    </a>
 
-                <div class="mb-3">
-                    <small class="text-muted d-block">Plano</small>
-                    <span class="text-capitalize">{{ company.plan }}</span>
-                </div>
-
-                <div class="mb-3">
-                    <small class="text-muted d-block">Criada em</small>
-                    <span>{{ company.created_at.strftime('%d/%m/%Y') }}</span>
-                </div>
-
-                <div>
-                    <small class="text-muted d-block">Status</small>
-                    {% if company.is_active %}
-                        <span class="text-success">Empresa ativa</span>
-                    {% else %}
-                        <span class="text-danger">Empresa inativa</span>
+                    {% if current_user.system_role == "super_admin" or current_user.company_role == "admin_empresa" %}
+                    <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary">
+                        Gerenciar usuários
+                    </a>
                     {% endif %}
                 </div>
             </div>
@@ -90,31 +73,13 @@
     <div class="col-12 col-lg-6">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <h5 class="mb-3">Acesso rápido</h5>
-
-                <div class="d-grid gap-2">
-                    {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario'] %}
-                    <a href="{{ url_for('customers.new_customer') }}" class="btn btn-primary">
-                        Novo Cliente
-                    </a>
-                    {% endif %}
-
-                    {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario', 'visualizador'] %}
-                    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-primary">
-                        Ver Clientes
-                    </a>
-                    {% endif %}
-
-                    {% if current_user.system_role == 'super_admin' or current_user.company_role == 'admin_empresa' %}
-                    <a href="{{ url_for('customers.list_users') }}" class="btn btn-outline-secondary">
-                        Gerenciar Usuários
-                    </a>
-                    {% endif %}
-                </div>
+                <h5 class="mb-3">Resumo</h5>
+                <p class="text-muted mb-0">
+                    Aqui você acompanha os principais dados da sua empresa dentro da plataforma.
+                </p>
             </div>
         </div>
     </div>
-
 </div>
 
 {% endblock %}

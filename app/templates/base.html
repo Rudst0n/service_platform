@@ -180,7 +180,7 @@
             <a class="nav-link" href="{{ url_for('customers.list_customers') }}">Clientes</a>
 
             {% if current_user.system_role == "super_admin" or current_user.company_role == "admin_empresa" %}
-            <a class="nav-link" href="{{ url_for('customers.list_users') }}">Usuários</a>
+            <a class="nav-link" href="{{ url_for('users.list_users') }}">Usuários</a>
             {% endif %}
 
             <a class="nav-link" href="#">Serviços</a>
@@ -245,7 +245,7 @@
         </a>
 
         {% if current_user.system_role == "super_admin" or current_user.company_role == "admin_empresa" %}
-        <a href="{{ url_for('customers.list_users') }}">
+        <a href="{{ url_for('users.list_users') }}">
             <span class="bottom-nav-icon">👤</span>
             <span>Usuários</span>
         </a>
