@@ -8,6 +8,7 @@ from app.blueprints.auth import auth_bp
 from app.blueprints.main import main_bp
 from app.blueprints.customers import customers_bp
 from app.blueprints.users import users_bp
+from app.blueprints.services import services_bp
 
 
 @login_manager.user_loader
@@ -30,5 +31,6 @@ def create_app():
     app.register_blueprint(main_bp)
     app.register_blueprint(customers_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(services_bp)
 
     return app

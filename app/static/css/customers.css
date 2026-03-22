@@ -1,0 +1,135 @@
+.customers-page {
+    width: 100%;
+}
+
+.customers-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.customers-add-btn {
+    min-height: 44px;
+}
+
+.customers-search-card,
+.customers-list-card {
+    background: rgba(16, 24, 38, 0.92);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+}
+
+.customers-search-input {
+    min-height: 46px;
+}
+
+.customers-table th {
+    color: #dbe4ef;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    background: transparent;
+    border-top: 0;
+}
+
+.customers-table td {
+    vertical-align: middle;
+}
+
+.customers-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.customers-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(31, 111, 235, 0.22), rgba(56, 139, 253, 0.12));
+    border: 1px solid rgba(56, 139, 253, 0.2);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.customers-name-wrap {
+    min-width: 0;
+    flex: 1;
+}
+
+.customers-info-cell {
+    color: #dbe4ef;
+    word-break: break-word;
+}
+
+.customers-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.customers-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.customers-mobile-card {
+    background: #0d1117;
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.customers-mobile-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.customers-mobile-main {
+    min-width: 0;
+    flex: 1;
+}
+
+.customers-mobile-name {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+    word-break: break-word;
+}
+
+.customers-mobile-meta {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.customers-delete-form {
+    margin: 0;
+}
+
+@media (max-width: 767.98px) {
+    .customers-header {
+        align-items: stretch;
+    }
+
+    .customers-add-btn {
+        width: 100%;
+    }
+
+    .customers-actions {
+        flex-direction: row;
+    }
+}

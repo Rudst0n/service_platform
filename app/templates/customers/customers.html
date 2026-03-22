@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes | ServHub{% endblock %}
+
+{% block content %}
+
+<section class="customers-page">
+    <div class="customers-header">
+        <div>
+            <h2 class="page-title mb-1">Clientes</h2>
+            <p class="page-subtitle mb-0">Gerencie os clientes cadastrados da sua empresa</p>
+        </div>
+
+        {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario'] %}
+        <a href="{{ url_for('customers.new_customer') }}" class="btn btn-primary customers-add-btn">
+            Novo cliente
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="card border-0 shadow-sm customers-search-card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('customers.list_customers') }}" class="customers-search-form">
+                <div class="row g-2 align-items-center">
+                    <div class="col-12 col-lg-8">
+                        <label for="search" class="form-label visually-hidden">Buscar cliente</label>
+                        <input
+                            type="text"
+                            id="search"
+                            name="search"
+                            class="form-control customers-search-input"
+                            placeholder="Buscar cliente pelo nome"
+                            value="{{ search or '' }}"
+                        >
+                    </div>
+
+                    <div class="col-6 col-lg-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            Buscar
+                        </button>
+                    </div>
+
+                    <div class="col-6 col-lg-2">
+                        <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-secondary w-100">
+                            Limpar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm customers-list-card">
+        <div class="card-body">
+            {% if customers %}
+
+            <div class="table-responsive d-none d-md-block">
+                <table class="table table-hover align-middle mb-0 customers-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>E-mail</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>
+                                <div class="customers-name-cell">
+                                    <div class="customers-avatar">
+                                        {{ customer.name[:1]|upper }}
+                                    </div>
+                                    <div class="customers-name-wrap">
+                                        <div class="customers-name">{{ customer.name }}</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="customers-info-cell">
+                                {{ customer.phone or 'Não informado' }}
+                            </td>
+
+                            <td class="customers-info-cell">
+                                {{ customer.email or 'Não informado' }}
+                            </td>
+
+                            <td class="text-end">
+                                <div class="customers-actions justify-content-end">
+                                    {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario'] %}
+                                    <a
+                                        href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}"
+                                        class="btn btn-sm btn-outline-primary"
+                                    >
+                                        Editar
+                                    </a>
+                                    {% endif %}
+
+                                    {% if current_user.system_role == 'super_admin' or current_user.company_role == 'admin_empresa' %}
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for('customers.delete_customer', customer_id=customer.id) }}"
+                                        class="customers-delete-form d-inline"
+                                        onsubmit="return confirm('Tem certeza que deseja excluir este cliente?');"
+                                    >
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            Excluir
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-md-none customers-mobile-list">
+                {% for customer in customers %}
+                <article class="customers-mobile-card">
+                    <div class="customers-mobile-top">
+                        <div class="customers-avatar">
+                            {{ customer.name[:1]|upper }}
+                        </div>
+
+                        <div class="customers-mobile-main">
+                            <h5 class="customers-mobile-name mb-1">{{ customer.name }}</h5>
+
+                            <p class="customers-mobile-meta mb-1">
+                                <strong>Telefone:</strong> {{ customer.phone or 'Não informado' }}
+                            </p>
+
+                            <p class="customers-mobile-meta mb-0">
+                                <strong>E-mail:</strong> {{ customer.email or 'Não informado' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="customers-actions mt-3">
+                        {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario'] %}
+                        <a
+                            href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}"
+                            class="btn btn-sm btn-outline-primary flex-fill"
+                        >
+                            Editar
+                        </a>
+                        {% endif %}
+
+                        {% if current_user.system_role == 'super_admin' or current_user.company_role == 'admin_empresa' %}
+                        <form
+                            method="POST"
+                            action="{{ url_for('customers.delete_customer', customer_id=customer.id) }}"
+                            class="customers-delete-form flex-fill"
+                            onsubmit="return confirm('Tem certeza que deseja excluir este cliente?');"
+                        >
+                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                Excluir
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+
+            {% else %}
+            <div class="empty-state">
+                <h5>Nenhum cliente encontrado</h5>
+                <p>Você ainda não tem clientes cadastrados ou sua busca não retornou resultados.</p>
+
+                {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario'] %}
+                <a href="{{ url_for('customers.new_customer') }}" class="btn btn-primary">
+                    Cadastrar primeiro cliente
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}

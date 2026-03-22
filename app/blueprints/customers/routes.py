@@ -57,7 +57,7 @@ def list_customers():
     customers = query.order_by(Customer.id.desc()).all()
 
     return render_template(
-        "customers.html",
+        "customers/customers.html",
         customers=customers,
         search=search
     )
@@ -77,7 +77,7 @@ def new_customer():
 
         if not name:
             flash("O nome do cliente é obrigatório.", "danger")
-            return render_template("new_customer.html")
+            return render_template("customers/new_customer.html")
 
         customer = Customer(
             name=name,
@@ -92,7 +92,7 @@ def new_customer():
         flash("Cliente cadastrado com sucesso.", "success")
         return redirect(url_for("customers.list_customers"))
 
-    return render_template("new_customer.html")
+    return render_template("customers/new_customer.html")
 
 
 @customers_bp.route("/<int:customer_id>/edit", methods=["GET", "POST"])
@@ -114,7 +114,7 @@ def edit_customer(customer_id):
 
         if not name:
             flash("O nome do cliente é obrigatório.", "danger")
-            return render_template("edit_customer.html", customer=customer)
+            return render_template("customers/edit_customer.html", customer=customer)
 
         customer.name = name
         customer.phone = phone or None
@@ -125,7 +125,7 @@ def edit_customer(customer_id):
         flash("Cliente atualizado com sucesso.", "success")
         return redirect(url_for("customers.list_customers"))
 
-    return render_template("edit_customer.html", customer=customer)
+    return render_template("customers/edit_customer.html", customer=customer)
 
 
 @customers_bp.route("/<int:customer_id>/delete", methods=["POST"])

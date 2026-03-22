@@ -1,5 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
+
 from app.blueprints.auth import auth_bp
 from app.models.user import User
 from app.models.company import Company
@@ -32,29 +33,39 @@ def format_cnpj(value):
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "").strip()
+
+        if not email or not password:
+            flash("Preencha e-mail e senha.", "danger")
+            return render_template("auth/login.html")
 
         user = User.query.filter_by(email=email).first()
 
         if not user or not user.check_password(password):
             flash("E-mail ou senha inválidos.", "danger")
-            return render_template("login.html")
+            return render_template("auth/login.html")
 
         if not user.is_active:
             flash("Este usuário está inativo. Entre em contato com o administrador da empresa.", "warning")
-            return render_template("login.html")
+            return render_template("auth/login.html")
 
         login_user(user)
         flash("Login realizado com sucesso.", "success")
         return redirect(url_for("main.dashboard"))
 
-    return render_template("login.html")
+    return render_template("auth/login.html")
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
     if request.method == "POST":
         company_name = request.form.get("company_name", "").strip()
         cnpj = format_cnpj(request.form.get("cnpj"))
@@ -63,31 +74,38 @@ def register():
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "").strip()
 
-        if not company_name or not name or not email or not password:
-            flash("Preencha todos os campos obrigatórios.", "danger")
-            return render_template("register.html")
+        if not company_name or not name or not email or not password or not cpf:
+            flash("Preencha todos os campos obrigatórios, incluindo o CPF.", "danger")
+            return render_template("auth/register.html")
+
+        if len(only_digits(cpf)) != 11:
+            flash("CPF inválido.", "danger")
+            return render_template("auth/register.html")
+
+        if cnpj and len(only_digits(cnpj)) != 14:
+            flash("CNPJ inválido.", "danger")
+            return render_template("auth/register.html")
 
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             flash("Já existe um usuário com este e-mail.", "danger")
-            return render_template("register.html")
+            return render_template("auth/register.html")
 
-        if cpf:
-            existing_cpf = User.query.filter_by(cpf=cpf).first()
-            if existing_cpf:
-                flash("Já existe um usuário com este CPF.", "danger")
-                return render_template("register.html")
+        existing_cpf = User.query.filter_by(cpf=cpf).first()
+        if existing_cpf:
+            flash("Já existe um usuário com este CPF.", "danger")
+            return render_template("auth/register.html")
 
         existing_company = Company.query.filter_by(name=company_name).first()
         if existing_company:
             flash("Já existe uma empresa com este nome.", "danger")
-            return render_template("register.html")
+            return render_template("auth/register.html")
 
         if cnpj:
             existing_cnpj = Company.query.filter_by(cnpj=cnpj).first()
             if existing_cnpj:
                 flash("Já existe uma empresa com este CNPJ.", "danger")
-                return render_template("register.html")
+                return render_template("auth/register.html")
 
         company = Company(
             name=company_name,
@@ -110,10 +128,10 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        flash("Conta criada com sucesso.", "success")
+        flash("Conta criada com sucesso. Faça seu login para continuar.", "success")
         return redirect(url_for("auth.login"))
 
-    return render_template("register.html")
+    return render_template("auth/register.html")
 
 
 @auth_bp.route("/logout")
