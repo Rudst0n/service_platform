@@ -1,0 +1,443 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-page">
+
+    <div class="dashboard-header mb-4">
+        <div>
+            <h1 class="page-title mb-1">Dashboard</h1>
+            {% if is_super_admin %}
+                <p class="page-subtitle mb-0">Visão geral da plataforma, empresas e andamento dos serviços.</p>
+            {% else %}
+                <p class="page-subtitle mb-0">Visão geral da sua empresa, uso do plano e andamento dos serviços.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not is_super_admin and plan_usage %}
+        {% set customers_limit = plan_usage.customers.limit %}
+        {% set services_limit = plan_usage.services.limit %}
+        {% set users_limit = plan_usage.users.limit %}
+
+        {% set customers_percent = plan_usage.customers.percent %}
+        {% set services_percent = plan_usage.services.percent %}
+        {% set users_percent = plan_usage.users.percent %}
+
+        {% set show_plan_alert =
+            (customers_limit and customers_percent >= 80) or
+            (services_limit and services_percent >= 80) or
+            (users_limit and users_percent >= 80)
+        %}
+    {% else %}
+        {% set show_plan_alert = false %}
+    {% endif %}
+
+    {% if show_plan_alert %}
+    <div class="dashboard-card mb-4 border border-warning-subtle">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+            <div>
+                <h5 class="mb-1">Atenção ao uso do plano</h5>
+                <p class="mb-0 text-muted">
+                    Seu uso está se aproximando do limite em pelo menos um dos recursos. Considere solicitar upgrade para evitar bloqueios.
+                </p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="#" class="btn btn-warning btn-sm">Ver plano</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="dashboard-card stat-card h-100">
+                {% if is_super_admin %}
+                    <span class="stat-label">Empresas</span>
+                    <h3 class="stat-value">{{ total_companies }}</h3>
+                    <p class="stat-helper mb-0">Total cadastradas</p>
+                {% else %}
+                    <span class="stat-label">Empresa</span>
+                    <h3 class="stat-value">{{ company.name }}</h3>
+                    <p class="stat-helper mb-0">Ambiente ativo</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="dashboard-card stat-card h-100">
+                <span class="stat-label">Clientes</span>
+                <h3 class="stat-value">{{ total_customers }}</h3>
+                <p class="stat-helper mb-0">
+                    {% if is_super_admin %}Total na plataforma{% else %}Total cadastrados{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="dashboard-card stat-card h-100">
+                <span class="stat-label">Serviços</span>
+                <h3 class="stat-value">{{ total_services }}</h3>
+                <p class="stat-helper mb-0">
+                    {% if is_super_admin %}Total na plataforma{% else %}Total registrados{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="dashboard-card stat-card h-100">
+                <span class="stat-label">
+                    {% if is_super_admin %}Faturamento total{% else %}Valor total{% endif %}
+                </span>
+                <h3 class="stat-value">R$ {{ "%.2f"|format(total_revenue or 0)|replace(".", ",") }}</h3>
+                <p class="stat-helper mb-0">Soma dos serviços finalizados</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-xl-7">
+            <div class="dashboard-card h-100">
+                <div class="section-header mb-3">
+                    {% if is_super_admin %}
+                        <h4 class="section-title mb-1">Visão da plataforma</h4>
+                        <p class="section-subtitle mb-0 text-uppercase">Administração geral</p>
+                    {% else %}
+                        <h4 class="section-title mb-1">Seu plano</h4>
+                        <p class="section-subtitle mb-0 text-uppercase">{{ current_user.company.plan }}</p>
+                    {% endif %}
+                </div>
+
+                {% if is_super_admin %}
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <div class="dashboard-card stat-card h-100">
+                                <span class="stat-label">Empresas</span>
+                                <h3 class="stat-value">{{ total_companies }}</h3>
+                                <p class="stat-helper mb-0">Base total da plataforma</p>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="dashboard-card stat-card h-100">
+                                <span class="stat-label">Serviços finalizados</span>
+                                <h3 class="stat-value">{{ services_finalizado }}</h3>
+                                <p class="stat-helper mb-0">Concluídos na plataforma</p>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>Clientes</small>
+                            <small>
+                                {{ plan_usage.customers.usage }} /
+                                {{ plan_usage.customers.limit if plan_usage.customers.limit else "∞" }}
+                            </small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar {% if plan_usage.customers.percent >= 90 %}bg-danger{% elif plan_usage.customers.percent >= 70 %}bg-warning{% else %}bg-success{% endif %}"
+                                 style="width: {{ plan_usage.customers.percent }}%;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>Serviços</small>
+                            <small>
+                                {{ plan_usage.services.usage }} /
+                                {{ plan_usage.services.limit if plan_usage.services.limit else "∞" }}
+                            </small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar {% if plan_usage.services.percent >= 90 %}bg-danger{% elif plan_usage.services.percent >= 70 %}bg-warning{% else %}bg-success{% endif %}"
+                                 style="width: {{ plan_usage.services.percent }}%;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <small>Funcionários</small>
+                            <small>
+                                {{ plan_usage.users.usage }} /
+                                {{ plan_usage.users.limit if plan_usage.users.limit else "∞" }}
+                            </small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar {% if plan_usage.users.percent >= 90 %}bg-danger{% elif plan_usage.users.percent >= 70 %}bg-warning{% else %}bg-success{% endif %}"
+                                 style="width: {{ plan_usage.users.percent }}%;">
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-5">
+            <div class="dashboard-card h-100">
+                <div class="section-header mb-3">
+                    <h4 class="section-title mb-1">Ações rápidas</h4>
+                    <p class="section-subtitle mb-0">Atalhos para as tarefas mais usadas no sistema.</p>
+                </div>
+
+                <div class="row g-2">
+                    {% if not is_super_admin %}
+                    <div class="col-12 col-sm-6">
+                        <a href="{{ url_for('customers.new_customer') }}" class="btn btn-primary w-100">
+                            Novo cliente
+                        </a>
+                    </div>
+
+                    <div class="col-12 col-sm-6">
+                        <a href="{{ url_for('services.new_service') }}" class="btn btn-primary w-100">
+                            Novo serviço
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    <div class="col-12 col-sm-6">
+                        <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-light w-100">
+                            Ver clientes
+                        </a>
+                    </div>
+
+                    <div class="col-12 col-sm-6">
+                        <a href="{{ url_for('services.list_services') }}" class="btn btn-outline-light w-100">
+                            Ver serviços
+                        </a>
+                    </div>
+
+                    {% if current_user.company_role == "admin_empresa" or current_user.system_role == "super_admin" %}
+                    <div class="col-12 col-sm-6">
+                        <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-light w-100">
+                            Gerenciar funcionários
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if current_user.system_role == "super_admin" %}
+                    <div class="col-12 col-sm-6">
+                        <a href="{{ url_for('admin.list_companies') }}" class="btn btn-warning w-100">
+                            Painel admin
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <hr class="my-4">
+
+                <div class="quick-info-list">
+                    <div class="quick-info-item">
+                        <span class="quick-info-label">Cliente com mais serviços</span>
+                        <strong class="quick-info-value">
+                            {{ top_customer[0] if top_customer else "Nenhum dado ainda" }}
+                        </strong>
+                    </div>
+
+                    <div class="quick-info-item">
+                        <span class="quick-info-label">Quantidade desse cliente</span>
+                        <strong class="quick-info-value">
+                            {% if top_customer %}
+                                {{ top_customer[-1] }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div class="quick-info-item">
+                        <span class="quick-info-label">Média por cliente</span>
+                        <strong class="quick-info-value">
+                            {% if total_customers > 0 %}
+                                {{ "%.1f"|format(total_services / total_customers) }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div class="quick-info-item">
+                        <span class="quick-info-label">Ticket médio</span>
+                        <strong class="quick-info-value">
+                            {% if services_finalizado > 0 %}
+                                R$ {{ "%.2f"|format(total_revenue / services_finalizado)|replace(".", ",") }}
+                            {% else %}
+                                R$ 0,00
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="section-header mb-3">
+                    <h4 class="section-title mb-1">Status dos serviços</h4>
+                    <p class="section-subtitle mb-0">Acompanhe rapidamente em que etapa os serviços estão.</p>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12 col-sm-6 col-xl">
+                        <div class="status-summary-card status-orcamento-card">
+                            <span class="status-summary-label">Orçamento</span>
+                            <strong class="status-summary-value">{{ services_orcamento }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-xl">
+                        <div class="status-summary-card status-aprovado-card">
+                            <span class="status-summary-label">Aprovado</span>
+                            <strong class="status-summary-value">{{ services_aprovado }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-xl">
+                        <div class="status-summary-card status-em-andamento-card">
+                            <span class="status-summary-label">Em andamento</span>
+                            <strong class="status-summary-value">{{ services_em_andamento }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-xl">
+                        <div class="status-summary-card status-finalizado-card">
+                            <span class="status-summary-label">Finalizado</span>
+                            <strong class="status-summary-value">{{ services_finalizado }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-xl">
+                        <div class="status-summary-card status-cancelado-card">
+                            <span class="status-summary-label">Cancelado</span>
+                            <strong class="status-summary-value">{{ services_cancelado }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-xl-8">
+            <div class="dashboard-card h-100">
+                <div class="section-header mb-3">
+                    <h4 class="section-title mb-1">Últimos serviços</h4>
+                    <p class="section-subtitle mb-0">
+                        {% if is_super_admin %}
+                            Os 10 registros mais recentes da plataforma.
+                        {% else %}
+                            Os 5 registros mais recentes da empresa.
+                        {% endif %}
+                    </p>
+                </div>
+
+                {% if latest_services %}
+                    <div class="table-responsive">
+                        <table class="table dashboard-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Serviço</th>
+                                    <th>Cliente</th>
+                                    {% if is_super_admin %}
+                                        <th>Empresa</th>
+                                    {% endif %}
+                                    <th>Status</th>
+                                    <th>Valor</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for service in latest_services %}
+                                <tr>
+                                    <td>{{ service.name }}</td>
+                                    <td>{{ service.customer.name if service.customer else "-" }}</td>
+                                    {% if is_super_admin %}
+                                        <td>{{ service.company.name if service.company else "-" }}</td>
+                                    {% endif %}
+                                    <td>
+                                        <span class="status-badge status-{{ service.status }}">
+                                            {% if service.status == "orcamento" %}
+                                                Orçamento
+                                            {% elif service.status == "aprovado" %}
+                                                Aprovado
+                                            {% elif service.status == "em_andamento" %}
+                                                Em andamento
+                                            {% elif service.status == "finalizado" %}
+                                                Finalizado
+                                            {% elif service.status == "cancelado" %}
+                                                Cancelado
+                                            {% else %}
+                                                {{ service.status }}
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td>R$ {{ "%.2f"|format(service.price or 0)|replace(".", ",") }}</td>
+                                    <td>{{ service.created_at.strftime("%d/%m/%Y %H:%M") if service.created_at else "-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-dashboard-state">
+                        <h5>Nenhum serviço cadastrado ainda</h5>
+                        <p class="mb-0">Assim que você cadastrar serviços, eles aparecerão aqui.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="dashboard-card h-100">
+                <div class="section-header mb-3">
+                    <h4 class="section-title mb-1">Insights rápidos</h4>
+                    <p class="section-subtitle mb-0">Leituras simples para tomada de decisão.</p>
+                </div>
+
+                <div class="quick-info-list">
+                    <div class="quick-info-item">
+                        <span class="quick-info-label">Taxa de finalização</span>
+                        <strong class="quick-info-value">
+                            {% if total_services > 0 %}
+                                {{ "%.1f"|format((services_finalizado / total_services) * 100) }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div class="quick-info-item">
+                        <span class="quick-info-label">Serviços em aberto</span>
+                        <strong class="quick-info-value">
+                            {{ services_orcamento + services_aprovado + services_em_andamento }}
+                        </strong>
+                    </div>
+
+                    <div class="quick-info-item">
+                        <span class="quick-info-label">Serviços cancelados</span>
+                        <strong class="quick-info-value">
+                            {{ services_cancelado }}
+                        </strong>
+                    </div>
+
+                    <div class="quick-info-item">
+                        <span class="quick-info-label">
+                            {% if is_super_admin %}Modo de acesso{% else %}Plano atual{% endif %}
+                        </span>
+                        <strong class="quick-info-value text-uppercase">
+                            {% if is_super_admin %}
+                                SUPER ADMIN
+                            {% else %}
+                                {{ current_user.company.plan }}
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

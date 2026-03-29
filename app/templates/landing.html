@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}{{ app_name }} | Gestão simples para sua empresa{% endblock %}
+
+{% block content %}
+<section class="landing-hero">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-12 col-lg-6">
+                <div class="landing-hero-content">
+                    <span class="landing-badge">Teste grátis por 7 dias com aprovação manual</span>
+                    <h1 class="landing-title">Gerencie sua empresa com mais organização, agilidade e controle</h1>
+                    <p class="landing-subtitle">{{ app_name }} reúne clientes, serviços, equipe e visão operacional em um só lugar, com uma experiência simples, acessível e pronta para funcionar bem no computador e no celular.</p>
+                    <div class="landing-actions">
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg landing-btn-primary">Começar agora</a>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg landing-btn-secondary">Entrar na plataforma</a>
+                    </div>
+                    <div class="landing-mini-info">
+                        <span>Sem complicação</span>
+                        <span>Acesso de qualquer lugar</span>
+                        <span>Setup rápido</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6">
+                <div class="landing-hero-panel">
+                    <div class="landing-panel-header" aria-hidden="true">
+                        <span class="landing-panel-dot"></span>
+                        <span class="landing-panel-dot"></span>
+                        <span class="landing-panel-dot"></span>
+                    </div>
+                    <div class="landing-panel-body">
+                        <div class="landing-panel-card">
+                            <div class="landing-panel-label">Clientes ativos</div>
+                            <div class="landing-panel-number">128</div>
+                        </div>
+                        <div class="landing-panel-grid">
+                            <div class="landing-panel-box"><span class="landing-panel-label">Serviços</span><strong>42</strong></div>
+                            <div class="landing-panel-box"><span class="landing-panel-label">Pendências</span><strong>08</strong></div>
+                            <div class="landing-panel-box"><span class="landing-panel-label">Equipe</span><strong>06</strong></div>
+                            <div class="landing-panel-box"><span class="landing-panel-label">Relatórios</span><strong>24</strong></div>
+                        </div>
+                        <div class="landing-panel-footer">Uma visão simples para acompanhar o que importa no dia a dia.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="landing-section">
+    <div class="container">
+        <div class="landing-section-header text-center">
+            <h2 class="landing-section-title">Tudo o que você precisa em um só sistema</h2>
+            <p class="landing-section-subtitle">Menos planilhas soltas, menos retrabalho e mais clareza para organizar sua operação.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-12 col-md-6 col-xl-4">
+                <article class="landing-feature-card h-100">
+                    <div class="landing-feature-icon">CL</div>
+                    <h5 class="landing-feature-title">Gestão de clientes</h5>
+                    <p class="landing-feature-text">Cadastre, organize e acompanhe seus clientes com mais praticidade em uma única tela.</p>
+                </article>
+            </div>
+            <div class="col-12 col-md-6 col-xl-4">
+                <article class="landing-feature-card h-100">
+                    <div class="landing-feature-icon">SV</div>
+                    <h5 class="landing-feature-title">Controle de serviços</h5>
+                    <p class="landing-feature-text">Estruture seus serviços, imagens e informações de forma simples e fácil de consultar.</p>
+                </article>
+            </div>
+            <div class="col-12 col-md-6 col-xl-4">
+                <article class="landing-feature-card h-100">
+                    <div class="landing-feature-icon">RL</div>
+                    <h5 class="landing-feature-title">Relatórios e visão geral</h5>
+                    <p class="landing-feature-text">Acompanhe os principais dados da empresa e tenha uma visão mais clara da operação.</p>
+                </article>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="landing-section">
+    <div class="container">
+        <div class="landing-section-header text-center">
+            <h2 class="landing-section-title">Planos para cada fase do seu negócio</h2>
+            <p class="landing-section-subtitle">Escolha o plano ideal e comece com uma estrutura mais organizada para sua empresa.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-12 col-lg-4">
+                <article class="landing-plan-card h-100 d-flex flex-column">
+                    <div class="landing-plan-top">
+                        <div class="landing-plan-name">Starter</div>
+                        <div class="landing-plan-price">R$29 <span>/mês</span></div>
+                        <p class="landing-plan-description">Ideal para profissionais autônomos e operações menores.</p>
+                    </div>
+                    <ul class="landing-plan-list">
+                        <li>Até 50 clientes</li>
+                        <li>Até 100 serviços</li>
+                        <li>Até 2 funcionários</li>
+                    </ul>
+                    <div class="mt-auto"><a href="{{ url_for('auth.register') }}" class="btn btn-outline-light w-100 landing-plan-btn">Escolher Starter</a></div>
+                </article>
+            </div>
+            <div class="col-12 col-lg-4">
+                <article class="landing-plan-card landing-plan-card-featured h-100 d-flex flex-column">
+                    <div class="landing-plan-top">
+                        <div class="landing-plan-highlight">Mais escolhido</div>
+                        <div class="landing-plan-name">Pro</div>
+                        <div class="landing-plan-price">R$59 <span>/mês</span></div>
+                        <p class="landing-plan-description">Para empresas em crescimento que precisam de mais organização.</p>
+                    </div>
+                    <ul class="landing-plan-list">
+                        <li>Até 500 clientes</li>
+                        <li>Até 1000 serviços</li>
+                        <li>Até 10 funcionários</li>
+                    </ul>
+                    <div class="mt-auto"><a href="{{ url_for('auth.register') }}" class="btn btn-primary w-100 landing-plan-btn">Escolher Pro</a></div>
+                </article>
+            </div>
+            <div class="col-12 col-lg-4">
+                <article class="landing-plan-card h-100 d-flex flex-column">
+                    <div class="landing-plan-top">
+                        <div class="landing-plan-name">Business</div>
+                        <div class="landing-plan-price">R$99 <span>/mês</span></div>
+                        <p class="landing-plan-description">Pensado para equipes maiores e operação mais robusta.</p>
+                    </div>
+                    <ul class="landing-plan-list">
+                        <li>Uso sem limite de clientes</li>
+                        <li>Uso sem limite de serviços</li>
+                        <li>Uso sem limite de funcionários</li>
+                    </ul>
+                    <div class="mt-auto"><a href="{{ url_for('auth.register') }}" class="btn btn-outline-light w-100 landing-plan-btn">Escolher Business</a></div>
+                </article>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="landing-section">
+    <div class="container">
+        <div class="landing-section-header text-center">
+            <h2 class="landing-section-title">Fale com a equipe comercial</h2>
+            <p class="landing-section-subtitle">WhatsApp: {{ support_whatsapp }} | E-mail: {{ support_email }} | Instagram: {{ support_instagram }}</p>
+        </div>
+    </div>
+</section>
+
+<section class="landing-cta-section">
+    <div class="container">
+        <div class="landing-cta-box">
+            <h2 class="landing-cta-title">Comece a organizar sua operação hoje</h2>
+            <p class="landing-cta-text">Tenha uma plataforma simples, visual e acessível para acompanhar clientes, serviços e resultados.</p>
+            <div class="landing-actions justify-content-center">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg landing-btn-primary">Criar conta</a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg landing-btn-secondary">Já tenho conta</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

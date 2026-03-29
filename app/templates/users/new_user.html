@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1">Novo funcionário</h2>
+        <p class="text-muted mb-0">Cadastre um novo funcionário para sua empresa</p>
+    </div>
+</div>
+
+<div class="app-form-card">
+    <div class="card-body">
+        <form method="POST">
+            
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label class="form-label">Nome</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">CPF</label>
+                    <input type="text" name="cpf" class="form-control">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Perfil</label>
+                    <select name="company_role" class="form-select" required>
+                        <option value="">Selecione</option>
+                        <option value="admin_empresa">Administrador</option>
+                        <option value="funcionario">Funcionário</option>
+                        <option value="visualizador">Visualizador</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Senha</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary">
+                    Voltar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    Cadastrar funcionário
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

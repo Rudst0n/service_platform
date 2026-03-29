@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">{% if service %}Editar serviço{% else %}Novo serviço{% endif %}</h2>
+        <p class="text-muted mb-0">{% if service %}Atualize os dados do serviço{% else %}Cadastre um novo serviço para um cliente{% endif %}</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form method="POST">
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="row g-3">
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Nome do serviço</label>
+                    <input type="text" name="name" class="form-control" required value="{{ service.name if service else '' }}">
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Cliente</label>
+                    <select name="customer_id" class="form-select" required>
+                        <option value="">Selecione</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.id }}" {% if service and service.customer_id == customer.id %}selected{% endif %}>{{ customer.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Preço</label>
+                    <input type="number" step="0.01" name="price" class="form-control" value="{{ service.price if service and service.price is not none else '' }}">
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        {% set current_status = service.status if service else "orcamento" %}
+                        <option value="orcamento" {% if current_status == "orcamento" %}selected{% endif %}>Orçamento</option>
+                        <option value="aprovado" {% if current_status == "aprovado" %}selected{% endif %}>Aprovado</option>
+                        <option value="em_andamento" {% if current_status == "em_andamento" %}selected{% endif %}>Em andamento</option>
+                        <option value="finalizado" {% if current_status == "finalizado" %}selected{% endif %}>Finalizado</option>
+                        <option value="cancelado" {% if current_status == "cancelado" %}selected{% endif %}>Cancelado</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Responsável</label>
+                    <select name="assigned_to_id" class="form-select">
+                        <option value="">Não atribuído</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if service and service.assigned_to_id == user.id %}selected{% endif %}>{{ user.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Descrição</label>
+                    <textarea name="description" class="form-control" rows="4">{{ service.description if service and service.description else '' }}</textarea>
+                </div>
+
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <a href="{{ url_for('services.list_services') }}" class="btn btn-light border">
+                    Voltar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    {% if service %}Salvar alterações{% else %}Salvar serviço{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

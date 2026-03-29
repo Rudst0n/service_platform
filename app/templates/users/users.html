@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="customers-page">
+
+    <div class="customers-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="page-title mb-1">Funcionários</h2>
+            <p class="page-subtitle mb-0">Gerencie os funcionários da sua empresa</p>
+        </div>
+
+        <a href="{{ url_for('users.new_user') }}" class="btn btn-primary customers-add-btn">
+            Novo funcionário
+        </a>
+    </div>
+
+    <div class="customers-list-card">
+        <div class="card-body p-0">
+
+            {% if users %}
+            <div class="table-responsive">
+                <table class="customers-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-3">Nome</th>
+                            <th>E-mail</th>
+                            <th>CPF</th>
+                            <th>Perfil</th>
+                            <th>Status</th>
+                            <th class="text-end pe-3">Ações</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+
+                            <td class="ps-3">
+                                <div class="customers-name-cell">
+                                    <div class="customers-avatar">
+                                        {{ user.name[:1]|upper if user.name else "?" }}
+                                    </div>
+                                    <div class="customers-name-wrap">
+                                        <div class="customers-name">{{ user.name or "-" }}</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>{{ user.email or "-" }}</td>
+                            <td>{{ user.cpf|cpf_mask if user.cpf else "-" }}</td>
+
+                            <td>
+                                <form method="POST" action="{{ url_for('users.update_user_role', user_id=user.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                                    <select
+                                        name="company_role"
+                                        class="form-select form-select-sm"
+                                        onchange="this.form.submit()"
+                                        {% if user.id == current_user.id %}disabled{% endif %}
+                                    >
+                                        <option value="admin_empresa" {% if user.company_role == "admin_empresa" %}selected{% endif %}>
+                                            Administrador
+                                        </option>
+
+                                        <option value="funcionario" {% if user.company_role == "funcionario" %}selected{% endif %}>
+                                            Funcionário
+                                        </option>
+
+                                        <option value="visualizador" {% if user.company_role == "visualizador" %}selected{% endif %}>
+                                            Visualizador
+                                        </option>
+                                    </select>
+                                </form>
+                            </td>
+
+                            <td>
+                                {% if user.is_active %}
+                                    <span class="status-pill status-pill-success">Ativo</span>
+                                {% else %}
+                                    <span class="status-pill status-pill-muted">Inativo</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end pe-3">
+                                <div class="customers-actions">
+
+                                    <a href="{{ url_for('users.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
+                                        Editar
+                                    </a>
+
+                                    <a href="{{ url_for('users.reset_user_password', user_id=user.id) }}" class="btn btn-sm btn-outline-warning">
+                                        Senha
+                                    </a>
+
+                                    <form method="POST" action="{{ url_for('users.toggle_user_active', user_id=user.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm {% if user.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
+                                            {% if user.id == current_user.id %}disabled{% endif %}
+                                        >
+                                            {% if user.is_active %}Inativar{% else %}Ativar{% endif %}
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% else %}
+            <div class="empty-state">
+                <h5>Nenhum funcionário cadastrado</h5>
+                <p class="mb-0">Cadastre o primeiro funcionário da sua empresa.</p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</section>
+{% endblock %}

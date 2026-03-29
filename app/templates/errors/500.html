@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="mb-3">Erro interno</h1>
+    <p class="text-muted mb-4">Ocorreu um problema inesperado ao processar sua solicitação.</p>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Voltar ao dashboard</a>
+</div>
+{% endblock %}

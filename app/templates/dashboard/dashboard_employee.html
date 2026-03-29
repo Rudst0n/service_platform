@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="dashboard-page">
+
+    <div class="dashboard-header mb-4">
+        <div>
+            <h1 class="page-title mb-1">Meu trabalho</h1>
+            <p class="page-subtitle mb-0">Acompanhe os serviços atribuídos a você.</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="dashboard-card stat-card h-100">
+                <span class="stat-label">Meus serviços</span>
+                <h3 class="stat-value">{{ total_services }}</h3>
+                <p class="stat-helper mb-0">Total atribuídos a você</p>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="dashboard-card stat-card h-100">
+                <span class="stat-label">Em andamento</span>
+                <h3 class="stat-value">{{ services_em_andamento }}</h3>
+                <p class="stat-helper mb-0">Serviços em execução</p>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="dashboard-card stat-card h-100">
+                <span class="stat-label">Finalizados</span>
+                <h3 class="stat-value">{{ services_finalizado }}</h3>
+                <p class="stat-helper mb-0">Serviços concluídos</p>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="dashboard-card stat-card h-100">
+                <span class="stat-label">Pendentes</span>
+                <h3 class="stat-value">{{ services_pendentes }}</h3>
+                <p class="stat-helper mb-0">Orçamento e aprovados</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="section-header mb-3">
+            <h4 class="section-title mb-1">Meus últimos serviços</h4>
+            <p class="section-subtitle mb-0">Os serviços mais recentes atribuídos a você.</p>
+        </div>
+
+        {% if latest_services %}
+            <div class="table-responsive">
+                <table class="table dashboard-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Serviço</th>
+                            <th>Cliente</th>
+                            <th>Status</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for service in latest_services %}
+                        <tr>
+                            <td>{{ service.name }}</td>
+                            <td>{{ service.customer.name if service.customer else "-" }}</td>
+                            <td>
+                                <span class="status-badge status-{{ service.status }}">
+                                    {% if service.status == "orcamento" %}
+                                        Orçamento
+                                    {% elif service.status == "aprovado" %}
+                                        Aprovado
+                                    {% elif service.status == "em_andamento" %}
+                                        Em andamento
+                                    {% elif service.status == "finalizado" %}
+                                        Finalizado
+                                    {% elif service.status == "cancelado" %}
+                                        Cancelado
+                                    {% else %}
+                                        {{ service.status }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>{{ service.created_at.strftime("%d/%m/%Y %H:%M") if service.created_at else "-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-dashboard-state">
+                <h5>Nenhum serviço atribuído ainda</h5>
+                <p class="mb-0">Quando algum serviço for atribuído a você, ele aparecerá aqui.</p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+{% endblock %}
