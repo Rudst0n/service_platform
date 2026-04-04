@@ -1,170 +1,131 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="customers-page">
-    <div class="customers-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-        <div>
-            <h2 class="page-title mb-1">Funcionários</h2>
-            <p class="page-subtitle mb-0">Gerencie os funcionários da sua empresa</p>
-        </div>
 
-        <a
-            href="{{ url_for('users.new_user') }}"
-            class="btn btn-primary customers-add-btn"
-            aria-label="Cadastrar novo funcionário"
-        >
-            Novo funcionário
-        </a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Usuários</h2>
+        <p class="text-muted mb-0">Gerencie os usuários da sua empresa</p>
     </div>
 
-    <div class="customers-list-card">
-        <div class="card-body p-0">
-            {% if users %}
-                <div class="table-responsive">
-                    <table class="customers-table align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th class="ps-3" scope="col">Nome</th>
-                                <th scope="col">E-mail</th>
-                                <th scope="col">CPF</th>
-                                <th scope="col">Perfil</th>
-                                <th scope="col">Status</th>
-                                <th class="text-end pe-3" scope="col">Ações</th>
-                            </tr>
-                        </thead>
+    <a href="{{ url_for('users.new_user') }}" class="btn btn-primary">
+        Novo funcionário
+    </a>
+</div>
 
-                        <tbody>
-                            {% for user in users %}
-                                <tr>
-                                    <td class="ps-3">
-                                        <div class="customers-name-cell">
-                                            <div class="customers-avatar" aria-hidden="true">
-                                                {{ user.name[:1]|upper if user.name else "?" }}
-                                            </div>
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        {% if users %}
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Nome</th>
+                        <th>E-mail</th>
+                        <th>CPF</th>
+                        <th>Perfil</th>
+                        <th>Status</th>
+                        <th class="text-end pe-3">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td class="ps-3">{{ user.name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.cpf or '-' }}</td>
+                        <td>
+                            {% if user.company_role == 'admin_empresa' %}
+                                Administrador
+                            {% elif user.company_role == 'funcionario' %}
+                                Funcionário
+                            {% elif user.company_role == 'visualizador' %}
+                                Visualizador
+                            {% else %}
+                                {{ user.company_role }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.is_active %}
+                                <span class="badge bg-success">Ativo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="d-flex justify-content-end gap-2 flex-wrap">
 
-                                            <div class="customers-name-wrap">
-                                                <div class="customers-name">{{ user.name or "-" }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
+                                <a href="{{ url_for('users.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
+                                    Editar
+                                </a>
 
-                                    <td>
-                                        {% if user.email %}
-                                            <a
-                                                href="mailto:{{ user.email }}"
-                                                class="customers-contact-link"
-                                                aria-label="Enviar e-mail para {{ user.name or 'funcionário' }}"
-                                            >
-                                                {{ user.email }}
-                                            </a>
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
+                                <form method="POST" action="{{ url_for('users.toggle_user_status', user_id=user.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                        {% if user.is_active %}Desativar{% else %}Ativar{% endif %}
+                                    </button>
+                                </form>
 
-                                    <td>{{ user.cpf|cpf_mask if user.cpf else "-" }}</td>
+                                <form method="POST" action="{{ url_for('users.reset_user_password', user_id=user.id) }}" onsubmit="return confirm('Tem certeza que deseja redefinir a senha deste usuário?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                                        Resetar senha
+                                    </button>
+                                </form>
 
-                                    <td>
-                                        <form
-                                            method="POST"
-                                            action="{{ url_for('users.update_user_role', user_id=user.id) }}"
-                                        >
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <form method="POST" action="{{ url_for('users.delete_user', user_id=user.id) }}" onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        Excluir
+                                    </button>
+                                </form>
 
-                                            <label
-                                                for="company_role_{{ user.id }}"
-                                                class="visually-hidden"
-                                            >
-                                                Alterar perfil de {{ user.name or "funcionário" }}
-                                            </label>
-
-                                            <select
-                                                id="company_role_{{ user.id }}"
-                                                name="company_role"
-                                                class="form-select form-select-sm"
-                                                onchange="this.form.submit()"
-                                                aria-label="Perfil de {{ user.name or 'funcionário' }}"
-                                                {% if user.id == current_user.id %}disabled{% endif %}
-                                            >
-                                                <option
-                                                    value="admin_empresa"
-                                                    {% if user.company_role == "admin_empresa" %}selected{% endif %}
-                                                >
-                                                    Administrador
-                                                </option>
-
-                                                <option
-                                                    value="funcionario"
-                                                    {% if user.company_role == "funcionario" %}selected{% endif %}
-                                                >
-                                                    Funcionário
-                                                </option>
-
-                                                <option
-                                                    value="visualizador"
-                                                    {% if user.company_role == "visualizador" %}selected{% endif %}
-                                                >
-                                                    Visualizador
-                                                </option>
-                                            </select>
-                                        </form>
-                                    </td>
-
-                                    <td>
-                                        {% if user.is_active %}
-                                            <span class="status-pill status-pill-success">Ativo</span>
-                                        {% else %}
-                                            <span class="status-pill status-pill-muted">Inativo</span>
-                                        {% endif %}
-                                    </td>
-
-                                    <td class="text-end pe-3">
-                                        <div class="customers-actions">
-                                            <a
-                                                href="{{ url_for('users.edit_user', user_id=user.id) }}"
-                                                class="btn btn-sm btn-outline-primary"
-                                                aria-label="Editar {{ user.name or 'funcionário' }}"
-                                            >
-                                                Editar
-                                            </a>
-
-                                            <a
-                                                href="{{ url_for('users.reset_user_password', user_id=user.id) }}"
-                                                class="btn btn-sm btn-outline-warning"
-                                                aria-label="Redefinir senha de {{ user.name or 'funcionário' }}"
-                                            >
-                                                Senha
-                                            </a>
-
-                                            <form
-                                                method="POST"
-                                                action="{{ url_for('users.toggle_user_active', user_id=user.id) }}"
-                                            >
-                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                                                <button
-                                                    type="submit"
-                                                    class="btn btn-sm {% if user.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
-                                                    aria-label="{% if user.is_active %}Inativar{% else %}Ativar{% endif %} {{ user.name or 'funcionário' }}"
-                                                    {% if user.id == current_user.id %}disabled{% endif %}
-                                                >
-                                                    {% if user.is_active %}Inativar{% else %}Ativar{% endif %}
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <h5>Nenhum funcionário cadastrado</h5>
-                    <p class="mb-0">Cadastre o primeiro funcionário da sua empresa.</p>
-                </div>
-            {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+
+        {% if pagination and pagination.pages > 1 %}
+        <nav class="p-3">
+            <ul class="pagination justify-content-center mb-0">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('users.list_users', page=pagination.prev_num) }}">Anterior</a>
+                </li>
+                {% endif %}
+
+                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('users.list_users', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('users.list_users', page=pagination.next_num) }}">Próxima</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="p-4 text-center">
+            <h5 class="mb-2">Nenhum usuário encontrado</h5>
+            <p class="text-muted mb-3">Cadastre o primeiro funcionário da sua empresa.</p>
+            <a href="{{ url_for('users.new_user') }}" class="btn btn-primary">
+                Cadastrar funcionário
+            </a>
+        </div>
+        {% endif %}
     </div>
-</section>
+</div>
+
 {% endblock %}

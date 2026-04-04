@@ -61,8 +61,10 @@
 
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                         <span class="status-badge status-{{ card.service.status }}">{{ card.service.status }}</span>
-                        <span class="service-customer-badge">{{ card.service.customer.name if card.service.customer else "Sem cliente" }}</span>
-                        <span class="service-user-badge">{{ card.service.assigned_to.name if card.service.assigned_to else "Sem responsável" }}</span>
+                        <span class="service-customer-badge">
+                            {{ card.service.customer.name if card.service.customer else "Sem cliente" }}
+                        </span>
+                        <span class="service-user-badge">Sem responsável</span>
                     </div>
 
                     {% if current_user.company_role != "funcionario" %}
@@ -136,10 +138,10 @@
                                 </select>
                             </div>
                             <div class="col-12">
-                                <input type="file" name="image" multiple class="form-control form-control-sm" accept="image/*">
+                                <input type="file" name="image" class="form-control form-control-sm" accept="image/*">
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-sm w-100 mt-3">Enviar imagens</button>
+                        <button type="submit" class="btn btn-primary btn-sm w-100 mt-3">Enviar imagem</button>
                     </form>
 
                     <div class="gallery-box mt-auto">
@@ -172,13 +174,17 @@
             {% if pagination.has_prev %}
             <li class="page-item"><a class="page-link" href="{{ url_for('services.list_services', page=pagination.prev_num, search=search, status=status_filter, customer_id=customer_filter) }}">Anterior</a></li>
             {% endif %}
+
             {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
                 {% if page_num %}
-                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}"><a class="page-link" href="{{ url_for('services.list_services', page=page_num, search=search, status=status_filter, customer_id=customer_filter) }}">{{ page_num }}</a></li>
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('services.list_services', page=page_num, search=search, status=status_filter, customer_id=customer_filter) }}">{{ page_num }}</a>
+                    </li>
                 {% else %}
                     <li class="page-item disabled"><span class="page-link">...</span></li>
                 {% endif %}
             {% endfor %}
+
             {% if pagination.has_next %}
             <li class="page-item"><a class="page-link" href="{{ url_for('services.list_services', page=pagination.next_num, search=search, status=status_filter, customer_id=customer_filter) }}">Próxima</a></li>
             {% endif %}

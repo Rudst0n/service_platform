@@ -20,9 +20,8 @@
         <div class="card border-0 shadow-sm customer-form-card">
             <div class="card-body">
                 <form method="POST" class="customer-form">
-
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    
+
                     <div class="row g-3">
                         <div class="col-12">
                             <label for="name" class="form-label">Nome</label>
@@ -33,6 +32,7 @@
                                 class="form-control customer-input"
                                 placeholder="Digite o nome do cliente"
                                 autocomplete="name"
+                                value="{{ form_data.name if form_data else '' }}"
                                 required
                             >
                         </div>
@@ -46,6 +46,7 @@
                                 class="form-control customer-input"
                                 placeholder="Digite o telefone"
                                 inputmode="tel"
+                                value="{{ form_data.phone if form_data else '' }}"
                             >
                         </div>
 
@@ -58,6 +59,7 @@
                                 class="form-control customer-input"
                                 placeholder="Digite o e-mail"
                                 autocomplete="email"
+                                value="{{ form_data.email if form_data else '' }}"
                             >
                         </div>
                     </div>

@@ -12,39 +12,85 @@
 <div class="app-form-card">
     <div class="card-body">
         <form method="POST">
-            
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="row g-3">
 
                 <div class="col-md-6">
                     <label class="form-label">Nome</label>
-                    <input type="text" name="name" class="form-control" required>
+                    <input
+                        type="text"
+                        name="name"
+                        class="form-control"
+                        value="{{ request.form.get('name', '') }}"
+                        required
+                    >
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">E-mail</label>
-                    <input type="email" name="email" class="form-control" required>
+                    <input
+                        type="email"
+                        name="email"
+                        class="form-control"
+                        value="{{ request.form.get('email', '') }}"
+                        required
+                    >
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">CPF</label>
-                    <input type="text" name="cpf" class="form-control">
+                    <input
+                        type="text"
+                        name="cpf"
+                        class="form-control"
+                        value="{{ request.form.get('cpf', '') }}"
+                    >
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">Perfil</label>
                     <select name="company_role" class="form-select" required>
                         <option value="">Selecione</option>
-                        <option value="admin_empresa">Administrador</option>
-                        <option value="funcionario">Funcionário</option>
-                        <option value="visualizador">Visualizador</option>
+                        <option value="admin_empresa" {% if request.form.get('company_role') == 'admin_empresa' %}selected{% endif %}>Administrador</option>
+                        <option value="funcionario" {% if request.form.get('company_role') == 'funcionario' %}selected{% endif %}>Funcionário</option>
+                        <option value="visualizador" {% if request.form.get('company_role') == 'visualizador' %}selected{% endif %}>Visualizador</option>
                     </select>
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">Senha</label>
-                    <input type="password" name="password" class="form-control" required>
+                    <input
+                        type="password"
+                        name="password"
+                        class="form-control"
+                        required
+                    >
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Confirmar senha</label>
+                    <input
+                        type="password"
+                        name="confirm_password"
+                        class="form-control"
+                        required
+                    >
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check mt-2">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="is_active"
+                            id="is_active"
+                            {% if request.method == 'GET' or request.form.get('is_active') == 'on' %}checked{% endif %}
+                        >
+                        <label class="form-check-label" for="is_active">
+                            Usuário ativo
+                        </label>
+                    </div>
                 </div>
 
             </div>

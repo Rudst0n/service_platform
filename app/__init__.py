@@ -6,6 +6,7 @@ from flask_login import current_user
 from app.config import config_by_name
 from app.extensions import csrf, db, login_manager, migrate
 from app.models.company import CompanyStatus
+from app.utils.filters import brl, phone_mask
 from app.utils.security import format_cnpj, format_cpf
 
 
@@ -78,6 +79,14 @@ def register_template_filters(app):
     @app.template_filter('cnpj_mask')
     def cnpj_mask(value):
         return format_cnpj(value) if value else '-'
+
+    @app.template_filter('brl')
+    def brl_filter(value):
+        return brl(value)
+
+    @app.template_filter('phone_mask')
+    def phone_mask_filter(value):
+        return phone_mask(value)
 
 
 def register_middlewares(app):

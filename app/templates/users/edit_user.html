@@ -12,29 +12,91 @@
 <div class="app-form-card">
     <div class="card-body">
         <form method="POST">
-
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
+
             <div class="row g-3">
 
                 <div class="col-md-6">
                     <label class="form-label">Nome</label>
-                    <input type="text" name="name" class="form-control" value="{{ user.name }}" required>
+                    <input
+                        type="text"
+                        name="name"
+                        class="form-control"
+                        value="{{ request.form.get('name', user.name) }}"
+                        required
+                    >
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">E-mail</label>
-                    <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+                    <input
+                        type="email"
+                        name="email"
+                        class="form-control"
+                        value="{{ request.form.get('email', user.email) }}"
+                        required
+                    >
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">CPF</label>
-                    <input type="text" name="cpf" class="form-control" value="{{ user.cpf or '' }}">
+                    <input
+                        type="text"
+                        name="cpf"
+                        class="form-control"
+                        value="{{ request.form.get('cpf', user.cpf or '') }}"
+                    >
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Perfil</label>
+                    {% set selected_role = request.form.get('company_role', user.company_role) %}
+                    <select name="company_role" class="form-select" required>
+                        <option value="admin_empresa" {% if selected_role == 'admin_empresa' %}selected{% endif %}>Administrador</option>
+                        <option value="funcionario" {% if selected_role == 'funcionario' %}selected{% endif %}>Funcionário</option>
+                        <option value="visualizador" {% if selected_role == 'visualizador' %}selected{% endif %}>Visualizador</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Nova senha</label>
+                    <input
+                        type="password"
+                        name="password"
+                        class="form-control"
+                        placeholder="Preencha apenas se quiser alterar"
+                    >
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Confirmar nova senha</label>
+                    <input
+                        type="password"
+                        name="confirm_password"
+                        class="form-control"
+                        placeholder="Repita a nova senha"
+                    >
+                </div>
+
+                <div class="col-12">
+                    {% set active_checked = request.form.get('is_active') == 'on' if request.method == 'POST' else user.is_active %}
+                    <div class="form-check mt-2">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="is_active"
+                            id="is_active"
+                            {% if active_checked %}checked{% endif %}
+                        >
+                        <label class="form-check-label" for="is_active">
+                            Usuário ativo
+                        </label>
+                    </div>
                 </div>
 
             </div>
 
-            <div class="mt-4 d-flex gap-2">
+            <div class="mt-4 d-flex gap-2 flex-wrap">
                 <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary">
                     Voltar
                 </a>
