@@ -9,6 +9,7 @@ from app.models.company import Company, CompanyStatus
 from app.models.user import User
 from app.utils.audit import log_action
 from app.utils.security import (
+    build_user_token_payload,
     format_cnpj,
     format_cpf,
     generate_token,
@@ -17,8 +18,8 @@ from app.utils.security import (
     normalize_text,
     only_digits,
     read_token,
+    validate_user_token_payload,
 )
-
 
 CONFIRM_EMAIL_SALT = 'confirm-email'
 RESET_PASSWORD_SALT = 'reset-password'
@@ -47,14 +48,35 @@ def render_register_with_data():
     return render_template('auth/register.html', form_data=get_register_form_data())
 
 
-
 def build_absolute_link(endpoint, **values):
     return url_for(endpoint, _external=True, **values)
 
 
-
 def send_local_email(subject, recipient, link):
     print(f'[EMAIL SIMULADO] {subject} | para: {recipient} | link: {link}')
+
+
+def maybe_flash_debug_link(link, message_prefix='Link de teste local'):
+    if current_app.config.get('SHOW_AUTH_DEBUG_LINKS'):
+        flash(f'{message_prefix}: {link}', 'info')
+
+
+def handle_failed_login(user):
+    max_attempts = current_app.config.get('LOGIN_MAX_ATTEMPTS', 5)
+    lock_minutes = current_app.config.get('LOGIN_LOCK_MINUTES', 15)
+
+    if user:
+        user.register_failed_login(max_attempts=max_attempts, lock_minutes=lock_minutes)
+        db.session.commit()
+
+        if user.locked_until and user.locked_until > datetime.utcnow():
+            flash(
+                f'Muitas tentativas inválidas. Sua conta foi bloqueada temporariamente por {lock_minutes} minutos.',
+                'danger',
+            )
+            return
+
+    flash('E-mail ou senha inválidos.', 'danger')
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -72,8 +94,17 @@ def login():
 
         user = User.query.filter_by(email=email).first()
 
+        if user and user.is_temporarily_locked:
+            remaining_seconds = int((user.locked_until - datetime.utcnow()).total_seconds())
+            remaining_minutes = max(1, remaining_seconds // 60)
+            flash(
+                f'Sua conta está temporariamente bloqueada. Tente novamente em aproximadamente {remaining_minutes} minuto(s).',
+                'danger',
+            )
+            return render_template('auth/login.html')
+
         if not user or not user.check_password(password):
-            flash('E-mail ou senha inválidos.', 'danger')
+            handle_failed_login(user)
             return render_template('auth/login.html')
 
         if not user.is_active:
@@ -97,8 +128,17 @@ def login():
 
         now = datetime.utcnow()
         user.last_login_at = now
+        user.reset_login_lock()
         company.last_activity_at = now
-        log_action('login', 'user', user.id, 'Login realizado com sucesso.', company_id=company.id, user_id=user.id)
+
+        log_action(
+            'login',
+            'user',
+            user.id,
+            'Login realizado com sucesso.',
+            company_id=company.id,
+            user_id=user.id,
+        )
         db.session.commit()
 
         flash('Login realizado com sucesso.', 'success')
@@ -189,27 +229,40 @@ def register():
                 is_active=True,
                 email_confirmed=not current_app.config.get('REQUIRE_EMAIL_CONFIRMATION'),
                 last_login_at=None,
+                failed_login_attempts=0,
+                locked_until=None,
             )
             user.set_password(password)
             db.session.add(user)
             db.session.flush()
 
-            log_action('register_company', 'company', company.id, f'Empresa {company.name} criada com status pendente.', company_id=company.id, user_id=user.id)
+            log_action(
+                'register_company',
+                'company',
+                company.id,
+                f'Empresa {company.name} criada com status pendente.',
+                company_id=company.id,
+                user_id=user.id,
+            )
             db.session.commit()
         except Exception:
             db.session.rollback()
             flash('Não foi possível criar a conta agora. Tente novamente.', 'danger')
             return render_register_with_data()
 
-        confirm_token = generate_token({'user_id': user.id}, CONFIRM_EMAIL_SALT)
+        confirm_token = generate_token(
+            build_user_token_payload(user, purpose='confirm_email'),
+            CONFIRM_EMAIL_SALT,
+        )
         confirm_link = build_absolute_link('auth.confirm_email', token=confirm_token)
         send_local_email('Confirmação de e-mail', user.email, confirm_link)
 
         if current_app.config.get('REQUIRE_EMAIL_CONFIRMATION'):
             flash('Conta criada com sucesso. Confirmamos o envio do link de confirmação por e-mail.', 'success')
+            maybe_flash_debug_link(confirm_link, 'Link de confirmação local')
         else:
             flash('Conta criada com sucesso. Aguarde a liberação para acessar o sistema.', 'success')
-            flash(f'Link de confirmação local: {confirm_link}', 'info')
+            maybe_flash_debug_link(confirm_link, 'Link de confirmação local')
 
         return redirect(url_for('auth.login'))
 
@@ -225,12 +278,24 @@ def confirm_email(token):
         return redirect(url_for('auth.login'))
 
     user = User.query.get_or_404(data.get('user_id'))
+
+    if not validate_user_token_payload(user, data, 'confirm_email'):
+        flash('O link de confirmação é inválido ou expirou.', 'danger')
+        return redirect(url_for('auth.login'))
+
     if user.email_confirmed:
         flash('Seu e-mail já foi confirmado.', 'info')
         return redirect(url_for('auth.login'))
 
     user.email_confirmed = True
-    log_action('confirm_email', 'user', user.id, 'E-mail confirmado com sucesso.', company_id=user.company_id, user_id=user.id)
+    log_action(
+        'confirm_email',
+        'user',
+        user.id,
+        'E-mail confirmado com sucesso.',
+        company_id=user.company_id,
+        user_id=user.id,
+    )
     db.session.commit()
 
     flash('E-mail confirmado com sucesso. Agora você pode entrar quando sua empresa for aprovada.', 'success')
@@ -247,10 +312,13 @@ def forgot_password():
         user = User.query.filter_by(email=email).first()
 
         if user:
-            token = generate_token({'user_id': user.id}, RESET_PASSWORD_SALT)
+            token = generate_token(
+                build_user_token_payload(user, purpose='reset_password'),
+                RESET_PASSWORD_SALT,
+            )
             reset_link = build_absolute_link('auth.reset_password', token=token)
             send_local_email('Redefinição de senha', user.email, reset_link)
-            flash(f'Link de redefinição gerado para teste local: {reset_link}', 'info')
+            maybe_flash_debug_link(reset_link, 'Link de redefinição local')
 
         flash('Se o e-mail existir na base, o link de redefinição foi gerado.', 'success')
         return redirect(url_for('auth.login'))
@@ -271,6 +339,10 @@ def reset_password(token):
 
     user = User.query.get_or_404(data.get('user_id'))
 
+    if not validate_user_token_payload(user, data, 'reset_password'):
+        flash('O link de redefinição é inválido ou expirou.', 'danger')
+        return redirect(url_for('auth.forgot_password'))
+
     if request.method == 'POST':
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
@@ -285,19 +357,40 @@ def reset_password(token):
             return render_template('auth/reset_password.html', token=token)
 
         user.set_password(password)
-        log_action('reset_password', 'user', user.id, 'Senha redefinida por token.', company_id=user.company_id, user_id=user.id)
+        user.reset_login_lock()
+
+        log_action(
+            'reset_password',
+            'user',
+            user.id,
+            'Senha redefinida por token.',
+            company_id=user.company_id,
+            user_id=user.id,
+        )
         db.session.commit()
+
         flash('Senha atualizada com sucesso.', 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('auth/reset_password.html', token=token)
 
 
-@auth_bp.route('/logout')
+@auth_bp.route('/logout', methods=['POST'])
 @login_required
 def logout():
-    log_action('logout', 'user', current_user.id, 'Logout realizado com sucesso.', company_id=current_user.company_id, user_id=current_user.id)
+    user_id = current_user.id
+    company_id = current_user.company_id
+
+    log_action(
+        'logout',
+        'user',
+        user_id,
+        'Logout realizado com sucesso.',
+        company_id=company_id,
+        user_id=user_id,
+    )
     db.session.commit()
+
     logout_user()
     flash('Você saiu da sua conta com sucesso.', 'success')
     return redirect(url_for('auth.login'))

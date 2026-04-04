@@ -13,6 +13,7 @@
 
 .customers-add-btn {
     min-height: 44px;
+    padding-inline: 18px;
 }
 
 .customers-search-card,
@@ -36,6 +37,11 @@
     background: rgba(9, 16, 29, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.08);
     color: #e6edf7;
+    border-radius: 12px;
+}
+
+.customers-search-input:hover {
+    border-color: rgba(255, 255, 255, 0.14);
 }
 
 .customers-search-input:focus {
@@ -80,6 +86,7 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     padding: 14px 16px;
     white-space: nowrap;
+    vertical-align: middle;
 }
 
 .customers-table tbody tr,
@@ -135,6 +142,7 @@
     justify-content: center;
     font-weight: 800;
     flex-shrink: 0;
+    user-select: none;
 }
 
 .customers-name-wrap,
@@ -172,8 +180,13 @@
 .customers-actions {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 8px;
     flex-wrap: wrap;
+}
+
+.customers-actions form {
+    margin: 0;
 }
 
 .customers-actions .btn,
@@ -181,6 +194,7 @@
 .app-table .btn {
     min-height: 38px;
     white-space: nowrap;
+    border-radius: 10px;
 }
 
 .user-role-select,
@@ -190,6 +204,13 @@
     background-color: rgba(9, 16, 29, 0.9);
     color: #e6edf7;
     border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+}
+
+.user-role-select:hover,
+.customers-table .form-select:hover,
+.users-table .form-select:hover {
+    border-color: rgba(255, 255, 255, 0.14);
 }
 
 .user-role-select:focus,
@@ -199,15 +220,24 @@
     box-shadow: 0 0 0 0.18rem rgba(56, 139, 253, 0.12);
 }
 
+.user-role-select:disabled,
+.customers-table .form-select:disabled,
+.users-table .form-select:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 .status-pill {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     min-height: 28px;
     padding: 0 12px;
     border-radius: 999px;
     font-size: 0.82rem;
     font-weight: 700;
     border: 1px solid transparent;
+    white-space: nowrap;
 }
 
 .status-pill-success {
@@ -292,6 +322,33 @@
     color: #9aa4b2 !important;
 }
 
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+@media (max-width: 991.98px) {
+    .customers-table thead th,
+    .users-table thead th,
+    .app-table thead th,
+    .customers-table td,
+    .users-table td,
+    .app-table td {
+        padding-inline: 12px;
+    }
+
+    .customers-actions {
+        justify-content: flex-start;
+    }
+}
+
 @media (max-width: 767.98px) {
     .customers-header {
         align-items: stretch;
@@ -317,7 +374,14 @@
         flex: 1;
     }
 
-    .customers-actions .btn {
+    .customers-actions .btn,
+    .customers-actions form .btn {
         width: 100%;
+    }
+
+    .customers-avatar,
+    .user-avatar {
+        width: 38px;
+        height: 38px;
     }
 }

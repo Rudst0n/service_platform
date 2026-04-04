@@ -1,9 +1,25 @@
 {% extends "base.html" %}
 
+{% block title %}Erro interno | {{ app_name }}{% endblock %}
+
 {% block content %}
-<div class="text-center py-5">
-    <h1 class="mb-3">Erro interno</h1>
-    <p class="text-muted mb-4">Ocorreu um problema inesperado ao processar sua solicitação.</p>
-    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Voltar ao dashboard</a>
+<div class="container py-5">
+    <div class="text-center">
+        <h1 class="display-5 fw-bold mb-3">500</h1>
+        <h2 class="mb-3">Erro interno</h2>
+        <p class="text-muted mb-4">
+            Ocorreu um erro inesperado. Tente novamente em instantes.
+        </p>
+
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+                Voltar ao dashboard
+            </a>
+
+            <a href="{{ url_for('main.home') }}" class="btn btn-outline-light">
+                Ir para o início
+            </a>
+        </div>
+    </div>
 </div>
 {% endblock %}

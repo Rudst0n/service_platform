@@ -84,9 +84,12 @@
             </nav>
 
             <div class="sidebar-logout">
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger w-100">
-                    Sair
-                </a>
+                <form method="POST" action="{{ url_for('auth.logout') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        Sair
+                    </button>
+                </form>
             </div>
         </aside>
         {% endif %}
@@ -105,9 +108,13 @@
                 {% if current_user.is_authenticated %}
                 <div class="topbar-actions">
                     <span class="topbar-user">{{ current_user.name }}</span>
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm">
-                        Sair
-                    </a>
+
+                    <form method="POST" action="{{ url_for('auth.logout') }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            Sair
+                        </button>
+                    </form>
                 </div>
                 {% endif %}
             </div>

@@ -1,6 +1,8 @@
+import hashlib
 import re
-from itsdangerous import URLSafeTimedSerializer
+
 from flask import current_app
+from itsdangerous import URLSafeTimedSerializer
 
 EMAIL_REGEX = re.compile(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
 
@@ -52,11 +54,52 @@ def is_strong_password(password):
     return True, None
 
 
+def get_password_fingerprint(password_hash):
+    if not password_hash:
+        return None
+    return hashlib.sha256(password_hash.encode('utf-8')).hexdigest()[:16]
+
+
+def build_user_token_payload(user, purpose):
+    return {
+        'user_id': user.id,
+        'email': user.email,
+        'purpose': purpose,
+        'pwd': get_password_fingerprint(user.password_hash),
+    }
+
+
 def generate_token(payload, salt):
-    serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+    serializer = URLSafeTimedSerializer(
+        secret_key=current_app.config['SECRET_KEY'],
+        salt=current_app.config.get('SECURITY_PASSWORD_SALT', 'change-me-too'),
+    )
     return serializer.dumps(payload, salt=salt)
 
 
 def read_token(token, salt, max_age=3600):
-    serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+    serializer = URLSafeTimedSerializer(
+        secret_key=current_app.config['SECRET_KEY'],
+        salt=current_app.config.get('SECURITY_PASSWORD_SALT', 'change-me-too'),
+    )
     return serializer.loads(token, salt=salt, max_age=max_age)
+
+
+def validate_user_token_payload(user, payload, expected_purpose):
+    if not payload:
+        return False
+
+    if payload.get('user_id') != user.id:
+        return False
+
+    if payload.get('email') != user.email:
+        return False
+
+    if payload.get('purpose') != expected_purpose:
+        return False
+
+    current_pwd_fingerprint = get_password_fingerprint(user.password_hash)
+    if payload.get('pwd') != current_pwd_fingerprint:
+        return False
+
+    return True

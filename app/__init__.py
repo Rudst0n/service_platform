@@ -1,137 +1,155 @@
 from datetime import datetime
-import os
 
-from flask import Flask, request, redirect, url_for, flash, render_template
-from werkzeug.exceptions import RequestEntityTooLarge
-from flask_login import current_user, logout_user
+from flask import Flask, flash, redirect, render_template, request, url_for
+from flask_login import current_user
 
 from app.config import config_by_name
-from app.extensions import db, migrate, login_manager, csrf
-from app.models.user import User
+from app.extensions import csrf, db, login_manager, migrate
 from app.models.company import CompanyStatus
-from app.cli import create_super_admin
-from app.utils.filters import brl
-
-from app.blueprints.auth import auth_bp
-from app.blueprints.main import main_bp
-from app.blueprints.customers import customers_bp
-from app.blueprints.users import users_bp
-from app.blueprints.services import services_bp
-from app.blueprints.admin import admin_bp
+from app.utils.security import format_cnpj, format_cpf
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-
-def create_app():
+def create_app(config_name='development'):
     app = Flask(__name__)
-    env_name = os.getenv("FLASK_ENV", "development")
-    app.config.from_object(config_by_name.get(env_name, config_by_name["development"]))
+
+    config_class = config_by_name.get(config_name, config_by_name['development'])
+    app.config.from_object(config_class)
 
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
     csrf.init_app(app)
 
-    login_manager.login_view = "auth.login"
-    login_manager.login_message_category = "warning"
+    register_blueprints(app)
+    register_login(app)
+    register_context_processors(app)
+    register_template_filters(app)
+    register_middlewares(app)
+    register_error_handlers(app)
 
-    @app.template_filter("cpf_mask")
+    return app
+
+
+def register_blueprints(app):
+    from app.blueprints.admin import admin_bp
+    from app.blueprints.auth import auth_bp
+    from app.blueprints.customers import customers_bp
+    from app.blueprints.main import main_bp
+    from app.blueprints.services import services_bp
+    from app.blueprints.users import users_bp
+
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(main_bp)
+    app.register_blueprint(customers_bp, url_prefix='/customers')
+    app.register_blueprint(users_bp, url_prefix='/users')
+    app.register_blueprint(services_bp, url_prefix='/services')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
+
+
+def register_login(app):
+    from app.models.user import User
+
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Faça login para continuar.'
+    login_manager.login_message_category = 'warning'
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
+
+def register_context_processors(app):
+    @app.context_processor
+    def inject_globals():
+        return {
+            'app_name': app.config.get('APP_NAME'),
+            'app_slogan': app.config.get('APP_SLOGAN'),
+            'support_whatsapp': app.config.get('SUPPORT_WHATSAPP'),
+            'support_email': app.config.get('SUPPORT_EMAIL'),
+            'support_instagram': app.config.get('SUPPORT_INSTAGRAM'),
+        }
+
+
+def register_template_filters(app):
+    @app.template_filter('cpf_mask')
     def cpf_mask(value):
-        if not value:
-            return ""
+        return format_cpf(value) if value else '-'
 
-        digits = "".join(filter(str.isdigit, str(value)))
+    @app.template_filter('cnpj_mask')
+    def cnpj_mask(value):
+        return format_cnpj(value) if value else '-'
 
-        if len(digits) != 11:
-            return value
 
-        return f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
+def register_middlewares(app):
 
     @app.before_request
-    def enforce_company_access_and_track_activity():
-        if not request.endpoint:
-            return None
-
-        if request.endpoint.startswith("static") or request.endpoint == "auth.logout":
-            return None
-
+    def enforce_company_access():
         if not current_user.is_authenticated:
             return None
 
-        if not getattr(current_user, "is_active", False):
-            logout_user()
-            flash("Seu usuário está inativo.", "warning")
-            return redirect(url_for("auth.login"))
+        public_endpoints = {
+            'auth.login',
+            'auth.register',
+            'auth.confirm_email',
+            'auth.forgot_password',
+            'auth.reset_password',
+            'static',
+        }
 
-        company = getattr(current_user, "company", None)
+        if request.endpoint in public_endpoints:
+            return None
+
+        company = current_user.company
+
         if not company:
-            logout_user()
-            flash("Usuário sem empresa vinculada.", "danger")
-            return redirect(url_for("auth.login"))
+            flash('Usuário sem empresa vinculada.', 'danger')
+            return redirect(url_for('main.dashboard'))
 
-        if not company.is_active or company.status != CompanyStatus.ACTIVE:
-            logout_user()
+        if not company.is_access_allowed:
             if company.status == CompanyStatus.PENDING:
-                flash("Sua empresa ainda está pendente de liberação.", "warning")
+                flash('Sua empresa ainda está pendente de liberação.', 'warning')
             elif company.status == CompanyStatus.INACTIVE:
-                flash("Sua empresa está inativa no momento.", "warning")
+                flash('Sua empresa está inativa no momento.', 'warning')
             elif company.status == CompanyStatus.BLOCKED:
-                flash("Sua empresa foi bloqueada. Entre em contato com o suporte.", "danger")
+                flash('Sua empresa foi bloqueada. Entre em contato com o suporte.', 'danger')
             else:
-                flash("Sua empresa não possui acesso liberado no momento.", "warning")
-            return redirect(url_for("auth.login"))
+                flash('Sua empresa não possui acesso liberado no momento.', 'warning')
 
-        now = datetime.utcnow()
-        if not company.last_activity_at or (now - company.last_activity_at).total_seconds() >= 900:
-            company.last_activity_at = now
-            db.session.commit()
+            return redirect(url_for('main.dashboard'))
 
         return None
 
-    @app.errorhandler(RequestEntityTooLarge)
-    def handle_file_too_large(error):
-        flash("Arquivo muito grande. O limite permitido é de 5 MB.", "danger")
-        return redirect(request.referrer or url_for("main.dashboard"))
+    @app.after_request
+    def update_last_activity(response):
+        if current_user.is_authenticated:
+            try:
+                company = current_user.company
+                if company:
+                    now = datetime.utcnow()
+
+                    if (
+                        not company.last_activity_at
+                        or (now - company.last_activity_at).total_seconds() > 900
+                    ):
+                        company.last_activity_at = now
+                        db.session.commit()
+            except Exception:
+                db.session.rollback()
+
+        return response
+
+
+def register_error_handlers(app):
+
+    @app.errorhandler(403)
+    def forbidden_error(error):
+        return render_template('errors/403.html'), 403
 
     @app.errorhandler(404)
-    def not_found(error):
-        return render_template("errors/404.html"), 404
+    def not_found_error(error):
+        return render_template('errors/404.html'), 404
 
     @app.errorhandler(500)
     def internal_error(error):
         db.session.rollback()
-        return render_template("errors/500.html"), 500
-
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(main_bp)
-    app.register_blueprint(customers_bp)
-    app.register_blueprint(users_bp)
-    app.register_blueprint(services_bp)
-    app.register_blueprint(admin_bp)
-
-    app.jinja_env.filters["brl"] = brl
-
-    @app.after_request
-    def apply_security_headers(response):
-        response.headers["X-Frame-Options"] = "SAMEORIGIN"
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
-        return response
-
-    @app.context_processor
-    def inject_app_context():
-        return {
-            "app_name": app.config.get("APP_NAME", "ServHub"),
-            "app_slogan": app.config.get("APP_SLOGAN", ""),
-            "support_whatsapp": app.config.get("SUPPORT_WHATSAPP", ""),
-            "support_email": app.config.get("SUPPORT_EMAIL", ""),
-            "support_instagram": app.config.get("SUPPORT_INSTAGRAM", ""),
-        }
-
-    app.cli.add_command(create_super_admin)
-
-    return app
+        return render_template('errors/500.html'), 500
