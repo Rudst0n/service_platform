@@ -1,180 +1,262 @@
 {% extends "base.html" %}
 
+{% block title %}Empresas | ServHub{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/companies.css') }}">
+{% endblock %}
+
 {% block content %}
-
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="mb-1">Empresas</h2>
-        <p class="text-muted mb-0">Gerenciamento das empresas do sistema</p>
-    </div>
-</div>
-
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <p class="text-muted mb-1">Total</p>
-                <h5 class="mb-0">{{ pagination.total }}</h5>
-            </div>
+<section class="companies-page">
+    <div class="companies-header">
+        <div>
+            <h2 class="page-title mb-1">Empresas</h2>
+            <p class="page-subtitle mb-0">Gerenciamento das empresas do sistema</p>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <p class="text-muted mb-1">Página atual</p>
-                <h5 class="mb-0">{{ pagination.page }}</h5>
-            </div>
+    <div class="card companies-search-card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-2">
+                <div class="col-12 col-md-8">
+                    <select name="status" class="form-select companies-input">
+                        <option value="">Todos os status</option>
+                        <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>Pendente</option>
+                        <option value="active" {% if status_filter == "active" %}selected{% endif %}>Ativa</option>
+                        <option value="inactive" {% if status_filter == "inactive" %}selected{% endif %}>Inativa</option>
+                        <option value="blocked" {% if status_filter == "blocked" %}selected{% endif %}>Bloqueada</option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <button class="btn btn-primary w-100">Filtrar</button>
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <a href="{{ url_for('admin.list_companies') }}" class="btn btn-outline-secondary w-100">Limpar</a>
+                </div>
+            </form>
         </div>
     </div>
 
-    <div class="col-md-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <form method="GET" class="row g-2">
-                    <div class="col-12 col-md-8">
-                        <select name="status" class="form-select">
-                            <option value="">Todos os status</option>
-                            <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>Pendente</option>
-                            <option value="active" {% if status_filter == "active" %}selected{% endif %}>Ativa</option>
-                            <option value="inactive" {% if status_filter == "inactive" %}selected{% endif %}>Inativa</option>
-                            <option value="blocked" {% if status_filter == "blocked" %}selected{% endif %}>Bloqueada</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-md-2">
-                        <button class="btn btn-primary w-100">Filtrar</button>
-                    </div>
-                    <div class="col-6 col-md-2">
-                        <a href="{{ url_for('admin.list_companies') }}" class="btn btn-outline-secondary w-100">Limpar</a>
-                    </div>
-                </form>
+    <div class="card companies-list-card">
+        <div class="card-body">
+            {% if data %}
+
+            <div class="table-responsive d-none d-md-block">
+                <table class="table companies-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Empresa</th>
+                            <th>Status</th>
+                            <th>Plano</th>
+                            <th>Usuários</th>
+                            <th>Clientes</th>
+                            <th>Serviços</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in data %}
+                        <tr>
+                            <td>
+                                <div class="companies-name-cell">
+                                    <div class="companies-avatar">
+                                        {{ item.company.name[:1]|upper if item.company.name else '?' }}
+                                    </div>
+
+                                    <div class="companies-name-wrap">
+                                        <div class="companies-name">{{ item.company.name }}</div>
+                                        <div class="companies-meta">{{ item.company.cnpj or "Sem CNPJ" }}</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <span class="status-pill status-{{ item.company.status }}">
+                                    {% if item.company.status == "active" %}
+                                        Ativa
+                                    {% elif item.company.status == "pending" %}
+                                        Pendente
+                                    {% elif item.company.status == "inactive" %}
+                                        Inativa
+                                    {% elif item.company.status == "blocked" %}
+                                        Bloqueada
+                                    {% else %}
+                                        {{ item.company.status }}
+                                    {% endif %}
+                                </span>
+                            </td>
+
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.update_company_plan', company_id=item.company.id) }}" class="companies-plan-form">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <select name="plan" class="form-select form-select-sm companies-plan-select">
+                                        <option value="starter" {% if item.company.plan == "starter" %}selected{% endif %}>Starter</option>
+                                        <option value="pro" {% if item.company.plan == "pro" %}selected{% endif %}>Pro</option>
+                                        <option value="business" {% if item.company.plan == "business" %}selected{% endif %}>Business</option>
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-primary">Salvar</button>
+                                </form>
+                            </td>
+
+                            <td>{{ item.users }}</td>
+                            <td>{{ item.customers }}</td>
+                            <td>{{ item.services }}</td>
+
+                            <td class="text-end">
+                                <div class="companies-actions justify-content-end">
+                                    {% if item.company.status != "active" %}
+                                    <form method="POST" action="{{ url_for('admin.activate_company', company_id=item.company.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button class="btn btn-sm btn-success">Ativar</button>
+                                    </form>
+                                    {% endif %}
+
+                                    {% if item.company.status != "inactive" %}
+                                    <form method="POST" action="{{ url_for('admin.deactivate_company', company_id=item.company.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button class="btn btn-sm btn-outline-secondary">Inativar</button>
+                                    </form>
+                                    {% endif %}
+
+                                    {% if item.company.status != "blocked" %}
+                                    <form method="POST" action="{{ url_for('admin.block_company', company_id=item.company.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button class="btn btn-sm btn-outline-danger">Bloquear</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        </div>
-    </div>
-</div>
 
-<div class="card shadow-sm border-0">
-    <div class="card-body p-0">
-        {% if data %}
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Empresa</th>
-                        <th>Status</th>
-                        <th>Plano</th>
-                        <th>Funcionários</th>
-                        <th>Clientes</th>
-                        <th>Serviços</th>
-                        <th class="text-end">Ações</th>
-                    </tr>
-                </thead>
+            <div class="companies-mobile-list d-md-none">
+                {% for item in data %}
+                <article class="companies-card">
+                    <div class="companies-top">
+                        <div class="companies-avatar">
+                            {{ item.company.name[:1]|upper if item.company.name else '?' }}
+                        </div>
 
-                <tbody>
-                    {% for item in data %}
-                    <tr>
-                        <td>
-                            <strong>{{ item.company.name }}</strong>
-                            <div class="small text-muted">
-                                {{ item.company.cnpj or "Sem CNPJ" }}
-                            </div>
-                        </td>
+                        <div class="companies-top-main">
+                            <h5 class="companies-mobile-name mb-1">{{ item.company.name }}</h5>
+                            <p class="companies-meta mb-0">{{ item.company.cnpj or "Sem CNPJ" }}</p>
+                        </div>
+                    </div>
 
-                        <td>
+                    <div class="companies-tags">
+                        <span class="status-pill status-{{ item.company.status }}">
                             {% if item.company.status == "active" %}
-                                <span class="badge bg-success">Ativa</span>
+                                Ativa
                             {% elif item.company.status == "pending" %}
-                                <span class="badge bg-warning text-dark">Pendente</span>
+                                Pendente
                             {% elif item.company.status == "inactive" %}
-                                <span class="badge bg-secondary">Inativa</span>
+                                Inativa
                             {% elif item.company.status == "blocked" %}
-                                <span class="badge bg-danger">Bloqueada</span>
+                                Bloqueada
                             {% else %}
-                                <span class="badge bg-dark">Desconhecido</span>
+                                {{ item.company.status }}
                             {% endif %}
-                        </td>
+                        </span>
 
-                        <td>
-                            <form method="POST" action="{{ url_for('admin.update_company_plan', company_id=item.company.id) }}" class="d-flex gap-2">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <select name="plan" class="form-select form-select-sm">
-                                    <option value="starter" {% if item.company.plan == "starter" %}selected{% endif %}>Starter</option>
-                                    <option value="pro" {% if item.company.plan == "pro" %}selected{% endif %}>Pro</option>
-                                    <option value="business" {% if item.company.plan == "business" %}selected{% endif %}>Business</option>
-                                </select>
-                                <button class="btn btn-sm btn-outline-primary">Salvar</button>
-                            </form>
-                        </td>
+                        <span class="plan-pill">{{ item.company.plan|upper }}</span>
+                    </div>
 
-                        <td>{{ item.users }}</td>
-                        <td>{{ item.customers }}</td>
-                        <td>{{ item.services }}</td>
+                    <div class="companies-stats">
+                        <div class="companies-stat-box">
+                            <span class="companies-stat-value">{{ item.users }}</span>
+                            <span class="companies-stat-label">Usuários</span>
+                        </div>
 
-                        <td class="text-end">
-                            <div class="d-flex justify-content-end gap-2 flex-wrap">
-                                {% if item.company.status != "active" %}
-                                <form method="POST" action="{{ url_for('admin.activate_company', company_id=item.company.id) }}">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button class="btn btn-sm btn-success">Ativar</button>
-                                </form>
-                                {% endif %}
+                        <div class="companies-stat-box">
+                            <span class="companies-stat-value">{{ item.customers }}</span>
+                            <span class="companies-stat-label">Clientes</span>
+                        </div>
 
-                                {% if item.company.status != "inactive" %}
-                                <form method="POST" action="{{ url_for('admin.deactivate_company', company_id=item.company.id) }}">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button class="btn btn-sm btn-outline-secondary">Inativar</button>
-                                </form>
-                                {% endif %}
+                        <div class="companies-stat-box">
+                            <span class="companies-stat-value">{{ item.services }}</span>
+                            <span class="companies-stat-label">Serviços</span>
+                        </div>
+                    </div>
 
-                                {% if item.company.status != "blocked" %}
-                                <form method="POST" action="{{ url_for('admin.block_company', company_id=item.company.id) }}">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button class="btn btn-sm btn-danger">Bloquear</button>
-                                </form>
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+                    <div class="companies-mobile-plan mt-3">
+                        <form method="POST" action="{{ url_for('admin.update_company_plan', company_id=item.company.id) }}" class="companies-plan-form-mobile">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <select name="plan" class="form-select companies-plan-select">
+                                <option value="starter" {% if item.company.plan == "starter" %}selected{% endif %}>Starter</option>
+                                <option value="pro" {% if item.company.plan == "pro" %}selected{% endif %}>Pro</option>
+                                <option value="business" {% if item.company.plan == "business" %}selected{% endif %}>Business</option>
+                            </select>
+                            <button class="btn btn-outline-primary w-100">Salvar plano</button>
+                        </form>
+                    </div>
 
-            </table>
-        </div>
-        {% else %}
-        <div class="text-center p-5">
-            <h5 class="mb-2">Nenhuma empresa encontrada</h5>
-            <p class="text-muted mb-0">Assim que novas empresas forem criadas, elas aparecerão aqui.</p>
-        </div>
-        {% endif %}
-    </div>
-</div>
+                    <div class="companies-actions mt-3">
+                        {% if item.company.status != "active" %}
+                        <form method="POST" action="{{ url_for('admin.activate_company', company_id=item.company.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-success w-100">Ativar</button>
+                        </form>
+                        {% endif %}
 
-{% if pagination.pages > 1 %}
-<nav class="mt-4">
-    <ul class="pagination justify-content-center">
-        {% if pagination.has_prev %}
-        <li class="page-item">
-            <a class="page-link" href="{{ url_for('admin.list_companies', page=pagination.prev_num, status=status_filter) }}">Anterior</a>
-        </li>
-        {% endif %}
+                        {% if item.company.status != "inactive" %}
+                        <form method="POST" action="{{ url_for('admin.deactivate_company', company_id=item.company.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-outline-secondary w-100">Inativar</button>
+                        </form>
+                        {% endif %}
 
-        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
-            {% if page_num %}
-                <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                    <a class="page-link" href="{{ url_for('admin.list_companies', page=page_num, status=status_filter) }}">{{ page_num }}</a>
-                </li>
+                        {% if item.company.status != "blocked" %}
+                        <form method="POST" action="{{ url_for('admin.block_company', company_id=item.company.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-outline-danger w-100">Bloquear</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+
             {% else %}
-                <li class="page-item disabled"><span class="page-link">...</span></li>
+            <div class="empty-state">
+                <h5>Nenhuma empresa encontrada</h5>
+                <p>Assim que novas empresas forem criadas, elas aparecerão aqui.</p>
+            </div>
             {% endif %}
-        {% endfor %}
+        </div>
+    </div>
 
-        {% if pagination.has_next %}
-        <li class="page-item">
-            <a class="page-link" href="{{ url_for('admin.list_companies', page=pagination.next_num, status=status_filter) }}">Próxima</a>
-        </li>
-        {% endif %}
-    </ul>
-</nav>
-{% endif %}
+    {% if pagination.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center mb-0">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.list_companies', page=pagination.prev_num, status=status_filter) }}">Anterior</a>
+            </li>
+            {% endif %}
 
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.list_companies', page=page_num, status=status_filter) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin.list_companies', page=pagination.next_num, status=status_filter) }}">Próxima</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</section>
 {% endblock %}

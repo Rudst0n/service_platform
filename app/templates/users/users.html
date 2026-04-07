@@ -1,131 +1,320 @@
 {% extends "base.html" %}
 
+{% block title %}Usuários | ServHub{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+{% endblock %}
+
 {% block content %}
+<section class="users-page">
+    <div class="users-header">
+        <div>
+            <h2 class="page-title mb-1">Usuários</h2>
+            <p class="page-subtitle mb-0">Gerencie os usuários da sua empresa</p>
+        </div>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="mb-1">Usuários</h2>
-        <p class="text-muted mb-0">Gerencie os usuários da sua empresa</p>
+        <a href="{{ url_for('users.new_user') }}" class="btn btn-primary users-add-btn">
+            Novo funcionário
+        </a>
     </div>
 
-    <a href="{{ url_for('users.new_user') }}" class="btn btn-primary">
-        Novo funcionário
-    </a>
-</div>
+    <div class="card border-0 shadow-sm users-search-card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('users.list_users') }}" class="users-search-form">
+                <div class="row g-2 align-items-center">
+                    <div class="col-12 col-lg-8">
+                        <label for="search" class="form-label visually-hidden">Buscar usuário</label>
+                        <input
+                            type="text"
+                            id="search"
+                            name="search"
+                            class="form-control users-search-input"
+                            placeholder="Buscar por nome, e-mail ou CPF"
+                            value="{{ search or '' }}"
+                            autocomplete="off"
+                        >
+                    </div>
 
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        {% if users %}
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-3">Nome</th>
-                        <th>E-mail</th>
-                        <th>CPF</th>
-                        <th>Perfil</th>
-                        <th>Status</th>
-                        <th class="text-end pe-3">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td class="ps-3">{{ user.name }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>{{ user.cpf or '-' }}</td>
-                        <td>
-                            {% if user.company_role == 'admin_empresa' %}
-                                Administrador
-                            {% elif user.company_role == 'funcionario' %}
-                                Funcionário
-                            {% elif user.company_role == 'visualizador' %}
-                                Visualizador
-                            {% else %}
-                                {{ user.company_role }}
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if user.is_active %}
-                                <span class="badge bg-success">Ativo</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Inativo</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-end pe-3">
-                            <div class="d-flex justify-content-end gap-2 flex-wrap">
+                    <div class="col-6 col-lg-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            Buscar
+                        </button>
+                    </div>
 
-                                <a href="{{ url_for('users.edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
-                                    Editar
+                    <div class="col-6 col-lg-2">
+                        <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary w-100">
+                            Limpar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm users-list-card">
+        <div class="card-body">
+            {% if users %}
+
+            <div class="table-responsive d-none d-md-block">
+                <table class="table table-hover align-middle mb-0 users-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>E-mail</th>
+                            <th>CPF</th>
+                            <th>Perfil</th>
+                            <th>Status</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <div class="user-name-cell">
+                                    <div class="user-avatar">
+                                        {{ user.name[:1]|upper if user.name else '?' }}
+                                    </div>
+
+                                    <div class="user-name-wrap">
+                                        <div class="user-name">{{ user.name }}</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="user-info-cell">
+                                <a href="mailto:{{ user.email }}" class="user-contact-link">
+                                    {{ user.email }}
                                 </a>
+                            </td>
 
-                                <form method="POST" action="{{ url_for('users.toggle_user_status', user_id=user.id) }}">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary">
-                                        {% if user.is_active %}Desativar{% else %}Ativar{% endif %}
-                                    </button>
-                                </form>
+                            <td class="user-info-cell">
+                                {{ user.cpf or 'Não informado' }}
+                            </td>
 
-                                <form method="POST" action="{{ url_for('users.reset_user_password', user_id=user.id) }}" onsubmit="return confirm('Tem certeza que deseja redefinir a senha deste usuário?');">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-warning">
-                                        Resetar senha
-                                    </button>
-                                </form>
+                            <td>
+                                {% if user.company_role == 'admin_empresa' %}
+                                    <span class="role-pill role-admin">Administrador</span>
+                                {% elif user.company_role == 'funcionario' %}
+                                    <span class="role-pill role-employee">Funcionário</span>
+                                {% elif user.company_role == 'visualizador' %}
+                                    <span class="role-pill role-viewer">Visualizador</span>
+                                {% else %}
+                                    <span class="role-pill">{{ user.company_role }}</span>
+                                {% endif %}
+                            </td>
 
-                                <form method="POST" action="{{ url_for('users.delete_user', user_id=user.id) }}" onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        Excluir
-                                    </button>
-                                </form>
+                            <td>
+                                {% if user.is_active %}
+                                    <span class="status-pill status-pill-success">Ativo</span>
+                                {% else %}
+                                    <span class="status-pill status-pill-muted">Inativo</span>
+                                {% endif %}
+                            </td>
 
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                            <td class="text-end">
+                                <div class="users-actions justify-content-end">
+                                    <a
+                                        href="{{ url_for('users.edit_user', user_id=user.id) }}"
+                                        class="btn btn-sm btn-outline-primary"
+                                    >
+                                        Editar
+                                    </a>
 
-        {% if pagination and pagination.pages > 1 %}
-        <nav class="p-3">
-            <ul class="pagination justify-content-center mb-0">
-                {% if pagination.has_prev %}
-                <li class="page-item">
-                    <a class="page-link" href="{{ url_for('users.list_users', page=pagination.prev_num) }}">Anterior</a>
-                </li>
-                {% endif %}
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for('users.toggle_user_status', user_id=user.id) }}"
+                                        class="d-inline"
+                                    >
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                            {% if user.is_active %}Desativar{% else %}Ativar{% endif %}
+                                        </button>
+                                    </form>
 
-                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
-                    {% if page_num %}
-                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                            <a class="page-link" href="{{ url_for('users.list_users', page=page_num) }}">{{ page_num }}</a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled"><span class="page-link">...</span></li>
-                    {% endif %}
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for('users.reset_user_password', user_id=user.id) }}"
+                                        class="d-inline"
+                                        onsubmit="return confirm('Tem certeza que deseja redefinir a senha deste usuário?');"
+                                    >
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                                            Resetar senha
+                                        </button>
+                                    </form>
+
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for('users.delete_user', user_id=user.id) }}"
+                                        class="d-inline"
+                                        onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');"
+                                    >
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            Excluir
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-md-none users-mobile-list">
+                {% for user in users %}
+                <article class="users-mobile-card">
+                    <div class="users-mobile-top">
+                        <div class="user-avatar">
+                            {{ user.name[:1]|upper if user.name else '?' }}
+                        </div>
+
+                        <div class="users-mobile-main">
+                            <h5 class="users-mobile-name mb-1">{{ user.name }}</h5>
+
+                            <p class="users-mobile-meta mb-1">
+                                <strong>E-mail:</strong>
+                                <a href="mailto:{{ user.email }}" class="user-contact-link">
+                                    {{ user.email }}
+                                </a>
+                            </p>
+
+                            <p class="users-mobile-meta mb-1">
+                                <strong>CPF:</strong>
+                                {{ user.cpf or 'Não informado' }}
+                            </p>
+
+                            <p class="users-mobile-meta mb-1">
+                                <strong>Perfil:</strong>
+                                {% if user.company_role == 'admin_empresa' %}
+                                    Administrador
+                                {% elif user.company_role == 'funcionario' %}
+                                    Funcionário
+                                {% elif user.company_role == 'visualizador' %}
+                                    Visualizador
+                                {% else %}
+                                    {{ user.company_role }}
+                                {% endif %}
+                            </p>
+
+                            <p class="users-mobile-meta mb-0">
+                                <strong>Status:</strong>
+                                {% if user.is_active %}
+                                    <span class="status-pill status-pill-success">Ativo</span>
+                                {% else %}
+                                    <span class="status-pill status-pill-muted">Inativo</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="users-actions mt-3">
+                        <a
+                            href="{{ url_for('users.edit_user', user_id=user.id) }}"
+                            class="btn btn-sm btn-outline-primary flex-fill users-mobile-action-btn"
+                        >
+                            Editar
+                        </a>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('users.toggle_user_status', user_id=user.id) }}"
+                            class="flex-fill"
+                        >
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary w-100 users-mobile-action-btn">
+                                {% if user.is_active %}Desativar{% else %}Ativar{% endif %}
+                            </button>
+                        </form>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('users.reset_user_password', user_id=user.id) }}"
+                            class="flex-fill"
+                            onsubmit="return confirm('Tem certeza que deseja redefinir a senha deste usuário?');"
+                        >
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-warning w-100 users-mobile-action-btn">
+                                Resetar senha
+                            </button>
+                        </form>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('users.delete_user', user_id=user.id) }}"
+                            class="flex-fill"
+                            onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');"
+                        >
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger w-100 users-mobile-action-btn">
+                                Excluir
+                            </button>
+                        </form>
+                    </div>
+                </article>
                 {% endfor %}
+            </div>
 
-                {% if pagination.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="{{ url_for('users.list_users', page=pagination.next_num) }}">Próxima</a>
-                </li>
+            {% if pagination and pagination.pages > 1 %}
+            <nav class="mt-4" aria-label="Paginação de usuários">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a
+                            class="page-link"
+                            href="{{ url_for('users.list_users', page=pagination.prev_num, search=search) if pagination.has_prev else '#' }}"
+                        >
+                            Anterior
+                        </a>
+                    </li>
+
+                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('users.list_users', page=page_num, search=search) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a
+                            class="page-link"
+                            href="{{ url_for('users.list_users', page=pagination.next_num, search=search) if pagination.has_next else '#' }}"
+                        >
+                            Próxima
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="empty-state">
+                {% if search %}
+                    <h5>Nenhum usuário encontrado para “{{ search }}”</h5>
+                    <p>Tente outro termo ou limpe a busca.</p>
+                    <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary">
+                        Limpar busca
+                    </a>
+                {% else %}
+                    <h5>Nenhum usuário encontrado</h5>
+                    <p>Cadastre o primeiro funcionário da sua empresa.</p>
+                    <a href="{{ url_for('users.new_user') }}" class="btn btn-primary">
+                        Cadastrar funcionário
+                    </a>
                 {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
-
-        {% else %}
-        <div class="p-4 text-center">
-            <h5 class="mb-2">Nenhum usuário encontrado</h5>
-            <p class="text-muted mb-3">Cadastre o primeiro funcionário da sua empresa.</p>
-            <a href="{{ url_for('users.new_user') }}" class="btn btn-primary">
-                Cadastrar funcionário
-            </a>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
-</div>
-
+</section>
 {% endblock %}

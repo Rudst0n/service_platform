@@ -1,5 +1,6 @@
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
+from sqlalchemy import or_
 
 from app.blueprints.users import users_bp
 from app.extensions import db
@@ -26,15 +27,49 @@ def validate_company_role(company_role):
     return company_role in ALLOWED_COMPANY_ROLES
 
 
+def find_duplicate_user(email, cpf, ignore_user_id=None):
+    query = User.query.filter(User.company_id == current_user.company_id)
+
+    filters = []
+    if email:
+        filters.append(User.email == email)
+    if cpf:
+        filters.append(User.cpf == cpf)
+
+    if not filters:
+        return None
+
+    query = query.filter(or_(*filters))
+
+    if ignore_user_id:
+        query = query.filter(User.id != ignore_user_id)
+
+    return query.first()
+
+
 @users_bp.route('/')
 @login_required
 @require_company_role('admin_empresa')
 def list_users():
     page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '').strip()
+
+    query = get_company_users_query()
+
+    if search:
+        search_digits = only_digits(search)
+        filters = [
+            User.name.ilike(f'%{search}%'),
+            User.email.ilike(f'%{search}%'),
+        ]
+
+        if search_digits:
+            filters.append(User.cpf.ilike(f'%{search_digits}%'))
+
+        query = query.filter(or_(*filters))
 
     pagination = (
-        get_company_users_query()
-        .order_by(User.id.desc())
+        query.order_by(User.id.desc())
         .paginate(page=page, per_page=10, error_out=False)
     )
 
@@ -42,6 +77,7 @@ def list_users():
         'users/users.html',
         users=pagination.items,
         pagination=pagination,
+        search=search,
     )
 
 
@@ -84,8 +120,12 @@ def new_user():
             flash('CPF inválido.', 'danger')
             return render_template('users/new_user.html')
 
-        if User.query.filter_by(email=email).first():
-            flash('Já existe um usuário com este e-mail.', 'danger')
+        duplicate_user = find_duplicate_user(email=email, cpf=cpf if cpf else None)
+        if duplicate_user:
+            if email and duplicate_user.email == email:
+                flash('Já existe um usuário com este e-mail na sua empresa.', 'danger')
+            else:
+                flash('Já existe um usuário com este CPF na sua empresa.', 'danger')
             return render_template('users/new_user.html')
 
         try:
@@ -157,12 +197,16 @@ def edit_user(user_id):
             flash('CPF inválido.', 'danger')
             return render_template('users/edit_user.html', user=user)
 
-        existing_email = User.query.filter(
-            User.email == email,
-            User.id != user.id
-        ).first()
-        if existing_email:
-            flash('Já existe outro usuário com este e-mail.', 'danger')
+        duplicate_user = find_duplicate_user(
+            email=email,
+            cpf=cpf if cpf else None,
+            ignore_user_id=user.id,
+        )
+        if duplicate_user:
+            if email and duplicate_user.email == email:
+                flash('Já existe outro usuário com este e-mail na sua empresa.', 'danger')
+            else:
+                flash('Já existe outro usuário com este CPF na sua empresa.', 'danger')
             return render_template('users/edit_user.html', user=user)
 
         if new_password:
@@ -277,6 +321,7 @@ def toggle_user_status(user_id):
 
 @users_bp.route('/<int:user_id>/toggle-active', methods=['POST'])
 @login_required
+@require_company_role('admin_empresa')
 def toggle_user_active(user_id):
     return toggle_user_status(user_id)
 
@@ -286,6 +331,10 @@ def toggle_user_active(user_id):
 @require_company_role('admin_empresa')
 def reset_user_password(user_id):
     user = get_company_users_query().filter_by(id=user_id).first_or_404()
+
+    if user.id == current_user.id:
+        flash('Use a opção de alteração de senha no seu próprio perfil.', 'warning')
+        return redirect(url_for('users.list_users'))
 
     try:
         user.set_password(DEFAULT_RESET_PASSWORD)

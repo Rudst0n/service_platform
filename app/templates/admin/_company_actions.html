@@ -1,0 +1,14 @@
+<form method="POST" action="{{ url_for('admin.activate_company', company_id=item.company.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-sm btn-success w-100">Ativar</button>
+</form>
+
+<form method="POST" action="{{ url_for('admin.deactivate_company', company_id=item.company.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-sm btn-outline-secondary w-100">Inativar</button>
+</form>
+
+<form method="POST" action="{{ url_for('admin.block_company', company_id=item.company.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-sm btn-danger w-100">Bloquear</button>
+</form>

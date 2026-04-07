@@ -2,6 +2,10 @@
 
 {% block title %}Novo cliente | ServHub{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/customers.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <section class="customer-form-page">

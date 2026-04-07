@@ -1,111 +1,127 @@
 {% extends "base.html" %}
 
+{% block title %}Editar funcionário | ServHub{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+{% endblock %}
+
 {% block content %}
+<section class="user-form-page">
+    <div class="user-form-wrapper">
+        <div class="user-form-header">
+            <div>
+                <h2 class="page-title mb-1">Editar funcionário</h2>
+                <p class="page-subtitle mb-0">Atualize os dados do funcionário</p>
+            </div>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h2 class="mb-1">Editar funcionário</h2>
-        <p class="text-muted mb-0">Atualize os dados do funcionário</p>
-    </div>
-</div>
+            <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary user-back-btn">
+                Voltar
+            </a>
+        </div>
 
-<div class="app-form-card">
-    <div class="card-body">
-        <form method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="card border-0 shadow-sm user-form-card">
+            <div class="card-body">
+                <form method="POST" class="user-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <div class="row g-3">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="name" class="form-label">Nome</label>
+                            <input
+                                type="text"
+                                name="name"
+                                id="name"
+                                class="form-control user-input"
+                                value="{{ request.form.get('name', user.name) }}"
+                                required
+                            >
+                        </div>
 
-                <div class="col-md-6">
-                    <label class="form-label">Nome</label>
-                    <input
-                        type="text"
-                        name="name"
-                        class="form-control"
-                        value="{{ request.form.get('name', user.name) }}"
-                        required
-                    >
-                </div>
+                        <div class="col-12 col-md-6">
+                            <label for="email" class="form-label">E-mail</label>
+                            <input
+                                type="email"
+                                name="email"
+                                id="email"
+                                class="form-control user-input"
+                                value="{{ request.form.get('email', user.email) }}"
+                                required
+                            >
+                        </div>
 
-                <div class="col-md-6">
-                    <label class="form-label">E-mail</label>
-                    <input
-                        type="email"
-                        name="email"
-                        class="form-control"
-                        value="{{ request.form.get('email', user.email) }}"
-                        required
-                    >
-                </div>
+                        <div class="col-12 col-md-6">
+                            <label for="cpf" class="form-label">CPF</label>
+                            <input
+                                type="text"
+                                name="cpf"
+                                id="cpf"
+                                class="form-control user-input"
+                                value="{{ request.form.get('cpf', user.cpf or '') }}"
+                            >
+                        </div>
 
-                <div class="col-md-6">
-                    <label class="form-label">CPF</label>
-                    <input
-                        type="text"
-                        name="cpf"
-                        class="form-control"
-                        value="{{ request.form.get('cpf', user.cpf or '') }}"
-                    >
-                </div>
+                        <div class="col-12 col-md-6">
+                            <label for="company_role" class="form-label">Perfil</label>
+                            {% set selected_role = request.form.get('company_role', user.company_role) %}
+                            <select name="company_role" id="company_role" class="form-select user-input" required>
+                                <option value="admin_empresa" {% if selected_role == 'admin_empresa' %}selected{% endif %}>Administrador</option>
+                                <option value="funcionario" {% if selected_role == 'funcionario' %}selected{% endif %}>Funcionário</option>
+                                <option value="visualizador" {% if selected_role == 'visualizador' %}selected{% endif %}>Visualizador</option>
+                            </select>
+                        </div>
 
-                <div class="col-md-6">
-                    <label class="form-label">Perfil</label>
-                    {% set selected_role = request.form.get('company_role', user.company_role) %}
-                    <select name="company_role" class="form-select" required>
-                        <option value="admin_empresa" {% if selected_role == 'admin_empresa' %}selected{% endif %}>Administrador</option>
-                        <option value="funcionario" {% if selected_role == 'funcionario' %}selected{% endif %}>Funcionário</option>
-                        <option value="visualizador" {% if selected_role == 'visualizador' %}selected{% endif %}>Visualizador</option>
-                    </select>
-                </div>
+                        <div class="col-12 col-md-6">
+                            <label for="password" class="form-label">Nova senha</label>
+                            <input
+                                type="password"
+                                name="password"
+                                id="password"
+                                class="form-control user-input"
+                                placeholder="Preencha apenas se quiser alterar"
+                            >
+                        </div>
 
-                <div class="col-md-6">
-                    <label class="form-label">Nova senha</label>
-                    <input
-                        type="password"
-                        name="password"
-                        class="form-control"
-                        placeholder="Preencha apenas se quiser alterar"
-                    >
-                </div>
+                        <div class="col-12 col-md-6">
+                            <label for="confirm_password" class="form-label">Confirmar nova senha</label>
+                            <input
+                                type="password"
+                                name="confirm_password"
+                                id="confirm_password"
+                                class="form-control user-input"
+                                placeholder="Repita a nova senha"
+                            >
+                        </div>
 
-                <div class="col-md-6">
-                    <label class="form-label">Confirmar nova senha</label>
-                    <input
-                        type="password"
-                        name="confirm_password"
-                        class="form-control"
-                        placeholder="Repita a nova senha"
-                    >
-                </div>
-
-                <div class="col-12">
-                    {% set active_checked = request.form.get('is_active') == 'on' if request.method == 'POST' else user.is_active %}
-                    <div class="form-check mt-2">
-                        <input
-                            class="form-check-input"
-                            type="checkbox"
-                            name="is_active"
-                            id="is_active"
-                            {% if active_checked %}checked{% endif %}
-                        >
-                        <label class="form-check-label" for="is_active">
-                            Usuário ativo
-                        </label>
+                        <div class="col-12">
+                            {% set active_checked = request.form.get('is_active') == 'on' if request.method == 'POST' else user.is_active %}
+                            <div class="form-check mt-2 user-check">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    name="is_active"
+                                    id="is_active"
+                                    {% if active_checked %}checked{% endif %}
+                                >
+                                <label class="form-check-label" for="is_active">
+                                    Usuário ativo
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-            </div>
+                    <div class="user-form-actions">
+                        <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary user-cancel-btn">
+                            Cancelar
+                        </a>
 
-            <div class="mt-4 d-flex gap-2 flex-wrap">
-                <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary">
-                    Voltar
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    Salvar alterações
-                </button>
+                        <button type="submit" class="btn btn-primary user-save-btn">
+                            Salvar alterações
+                        </button>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
-</div>
-
+</section>
 {% endblock %}

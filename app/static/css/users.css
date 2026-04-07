@@ -1,0 +1,393 @@
+.users-page {
+    width: 100%;
+}
+
+.users-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.users-add-btn {
+    min-height: 44px;
+    padding-inline: 18px;
+}
+
+.users-list-card,
+.user-form-card {
+    background: rgba(16, 24, 38, 0.92);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.users-list-card .card-body,
+.user-form-card .card-body {
+    padding: 20px;
+}
+
+.users-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: transparent;
+}
+
+.users-table thead,
+.users-table tbody {
+    background: transparent;
+}
+
+.users-table thead th {
+    color: #dbe4ef;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    background: transparent !important;
+    border-top: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px 16px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.users-table tbody tr {
+    background: transparent !important;
+    transition: background-color 0.2s ease;
+}
+
+.users-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.users-table td {
+    vertical-align: middle;
+    color: #dbe4ef;
+    background: transparent !important;
+    border-top: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-left: 0;
+    border-right: 0;
+    padding: 14px 16px;
+}
+
+.users-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.user-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(31, 111, 235, 0.22), rgba(56, 139, 253, 0.12));
+    border: 1px solid rgba(56, 139, 253, 0.2);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.user-name-wrap {
+    min-width: 0;
+    flex: 1;
+}
+
+.user-name {
+    color: #ffffff;
+    font-weight: 700;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.user-info-cell {
+    color: #dbe4ef;
+    word-break: break-word;
+}
+
+.user-contact-link {
+    color: #dbe4ef;
+    text-decoration: none;
+    transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.user-contact-link:hover,
+.user-contact-link:focus {
+    color: #ffffff;
+    opacity: 0.95;
+    text-decoration: underline;
+}
+
+.users-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.users-actions form {
+    margin: 0;
+}
+
+.users-actions .btn,
+.users-table .btn {
+    min-height: 38px;
+    white-space: nowrap;
+    border-radius: 10px;
+}
+
+.role-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    background: rgba(148, 163, 184, 0.12);
+    color: #cbd5e1;
+    border-color: rgba(148, 163, 184, 0.16);
+}
+
+.role-admin {
+    background: rgba(168, 85, 247, 0.12);
+    color: #d8b4fe;
+    border-color: rgba(168, 85, 247, 0.22);
+}
+
+.role-employee {
+    background: rgba(59, 130, 246, 0.12);
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.22);
+}
+
+.role-viewer {
+    background: rgba(148, 163, 184, 0.12);
+    color: #cbd5e1;
+    border-color: rgba(148, 163, 184, 0.16);
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.status-pill-success {
+    background: rgba(34, 197, 94, 0.12);
+    color: #6ee7a3;
+    border-color: rgba(34, 197, 94, 0.18);
+}
+
+.status-pill-muted {
+    background: rgba(148, 163, 184, 0.12);
+    color: #cbd5e1;
+    border-color: rgba(148, 163, 184, 0.16);
+}
+
+.empty-state {
+    padding: 32px 20px;
+    text-align: center;
+    color: #c3cfdd;
+}
+
+.empty-state h5 {
+    color: #ffffff;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.users-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.users-mobile-card {
+    background: #0d1117;
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+.users-mobile-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.users-mobile-main {
+    min-width: 0;
+    flex: 1;
+}
+
+.users-mobile-name {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.users-mobile-meta {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.users-mobile-meta strong {
+    color: #dbe4ef;
+    font-weight: 600;
+}
+
+.users-mobile-action-btn {
+    min-height: 42px;
+}
+
+.user-form-page {
+    width: 100%;
+}
+
+.user-form-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.user-form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.user-input {
+    min-height: 46px;
+    background: rgba(9, 16, 29, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #e6edf7;
+    border-radius: 12px;
+}
+
+.user-input:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.user-input:focus {
+    background: rgba(9, 16, 29, 0.98);
+    color: #ffffff;
+    border-color: rgba(56, 139, 253, 0.45);
+    box-shadow: 0 0 0 0.18rem rgba(56, 139, 253, 0.12);
+}
+
+.user-input::placeholder {
+    color: #8b98a9;
+}
+
+.user-form .form-label {
+    color: #dbe4ef;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.user-check .form-check-label {
+    color: #dbe4ef;
+}
+
+.user-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+
+.user-form-actions .btn {
+    min-height: 44px;
+    border-radius: 12px;
+    padding-inline: 18px;
+}
+
+@media (max-width: 991.98px) {
+    .users-table thead th,
+    .users-table td {
+        padding-inline: 12px;
+    }
+
+    .users-actions {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .users-header,
+    .user-form-header {
+        align-items: stretch;
+    }
+
+    .users-add-btn,
+    .user-back-btn {
+        width: 100%;
+    }
+
+    .users-list-card .card-body,
+    .user-form-card .card-body {
+        padding: 16px;
+    }
+
+    .users-actions {
+        flex-direction: row;
+        width: 100%;
+    }
+
+    .users-actions .btn,
+    .users-actions form {
+        flex: 1;
+    }
+
+    .users-actions .btn,
+    .users-actions form .btn {
+        width: 100%;
+    }
+
+    .user-avatar {
+        width: 38px;
+        height: 38px;
+    }
+
+    .user-form-actions {
+        flex-direction: column;
+    }
+
+    .user-form-actions .btn {
+        width: 100%;
+    }
+}

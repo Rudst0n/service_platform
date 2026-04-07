@@ -1,0 +1,222 @@
+/* PAGE */
+.dashboard-page {
+    width: 100%;
+}
+
+/* HEADER */
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.page-title {
+    color: #ffffff;
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.page-subtitle {
+    color: var(--muted);
+    font-size: 0.96rem;
+}
+
+/* CARD BASE */
+.dashboard-card {
+    background: rgba(16, 24, 38, 0.92);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 22px;
+}
+
+/* STAT CARDS */
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 150px;
+}
+
+.stat-label {
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.stat-value {
+    color: #ffffff;
+    font-size: 1.9rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    word-break: break-word;
+}
+
+.stat-helper {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+/* SECTION */
+.section-title {
+    color: #ffffff;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.section-subtitle {
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
+/* QUICK INFO */
+.quick-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.quick-info-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.quick-info-label {
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
+.quick-info-value {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* EMPTY */
+.empty-dashboard-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.empty-dashboard-state h5 {
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.empty-dashboard-state p {
+    color: var(--muted);
+}
+
+/* TABLE */
+.dashboard-table {
+    --bs-table-bg: transparent;
+    --bs-table-color: #d7e0eb;
+    --bs-table-border-color: var(--border);
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.02);
+    --bs-table-striped-color: #d7e0eb;
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.04);
+    --bs-table-hover-color: #ffffff;
+    color: #d7e0eb;
+    margin-bottom: 0;
+}
+
+.dashboard-table > :not(caption) > * > * {
+    background-color: transparent !important;
+    color: #d7e0eb !important;
+    border-bottom: 1px solid var(--border) !important;
+    box-shadow: none !important;
+}
+
+.dashboard-table thead th {
+    color: #ffffff !important;
+    font-size: 0.88rem;
+    font-weight: 700;
+    background: transparent !important;
+    border-bottom: 1px solid var(--border) !important;
+}
+
+.dashboard-table tbody tr {
+    background: transparent !important;
+}
+
+.dashboard-table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.03) !important;
+    color: #ffffff !important;
+}
+
+/* STATUS SUMMARY */
+.status-summary-card {
+    border-radius: 18px;
+    padding: 18px;
+    border: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 110px;
+    justify-content: center;
+}
+
+.status-summary-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.status-summary-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.status-orcamento-card {
+    background: rgba(255, 193, 7, 0.10);
+    border-color: rgba(255, 193, 7, 0.22);
+    color: #ffd666;
+}
+
+.status-aprovado-card {
+    background: rgba(13, 202, 240, 0.10);
+    border-color: rgba(13, 202, 240, 0.22);
+    color: #7dd3fc;
+}
+
+.status-em-andamento-card {
+    background: rgba(111, 66, 193, 0.12);
+    border-color: rgba(111, 66, 193, 0.24);
+    color: #c4b5fd;
+}
+
+.status-finalizado-card {
+    background: rgba(25, 135, 84, 0.12);
+    border-color: rgba(25, 135, 84, 0.24);
+    color: #86efac;
+}
+
+.status-cancelado-card {
+    background: rgba(220, 53, 69, 0.12);
+    border-color: rgba(220, 53, 69, 0.24);
+    color: #fca5a5;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .dashboard-card {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .page-title {
+        font-size: 1.6rem;
+    }
+
+    .stat-value {
+        font-size: 1.55rem;
+    }
+}

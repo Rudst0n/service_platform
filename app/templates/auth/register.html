@@ -2,179 +2,94 @@
 
 {% block title %}Criar conta | ServHub{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
 {% block content %}
-<section class="auth-section">
-    <div class="container">
-        <div class="row justify-content-center align-items-center g-4">
-            <div class="col-12 col-xl-11">
-                <div class="auth-shell">
-                    <div class="row g-0 align-items-stretch">
+<section class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2 class="auth-title">Criar conta</h2>
+                <p class="auth-subtitle">Cadastre sua empresa e comece a usar a plataforma</p>
+            </div>
 
-                        <div class="col-12 col-lg-5">
-                            <div class="auth-brand-panel">
-                                <span class="auth-badge">Cadastro rápido</span>
+            <form method="POST" class="auth-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                                <h1 class="auth-title">
-                                    Crie sua conta e comece a organizar seu negócio
-                                </h1>
-
-                                <p class="auth-subtitle">
-                                    Cadastre sua empresa ou seu perfil profissional para acessar uma plataforma simples, visual e pensada para funcionar bem também no celular.
-                                </p>
-
-                                <div class="auth-feature-list">
-                                    <div class="auth-feature-item">
-                                        <span class="auth-feature-dot"></span>
-                                        <span>Cadastro inicial simples</span>
-                                    </div>
-
-                                    <div class="auth-feature-item">
-                                        <span class="auth-feature-dot"></span>
-                                        <span>Base pronta para crescer</span>
-                                    </div>
-
-                                    <div class="auth-feature-item">
-                                        <span class="auth-feature-dot"></span>
-                                        <span>Acesso rápido ao painel</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-12 col-lg-7">
-                            <div class="auth-form-panel">
-                                <div class="auth-form-header">
-                                    <h2>Criar conta</h2>
-                                    <p class="text-muted mb-0">
-                                        Cadastre sua empresa ou seu perfil profissional para acessar a plataforma.
-                                    </p>
-                                </div>
-
-                                <form method="POST" class="auth-form">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <div class="row g-3">
-                                        <div class="col-12">
-                                            <label class="form-label" for="company_name">
-                                                Empresa ou nome profissional
-                                            </label>
-                                            <input
-                                                type="text"
-                                                id="company_name"
-                                                name="company_name"
-                                                class="form-control auth-input"
-                                                placeholder="Nome da empresa ou seu nome profissional"
-                                                autocomplete="organization"
-                                                required
-                                            >
-                                        </div>
-
-                                        <div class="col-12 col-md-6">
-                                            <label for="cnpj" class="form-label">CNPJ (opcional)</label>
-                                            <input
-                                                type="text"
-                                                class="form-control auth-input"
-                                                id="cnpj"
-                                                name="cnpj"
-                                                maxlength="18"
-                                                placeholder="00.000.000/0000-00"
-                                                inputmode="numeric"
-                                                autocomplete="off"
-                                            >
-                                        </div>
-
-                                        <div class="col-12 col-md-6">
-                                            <label for="cpf" class="form-label">CPF</label>
-                                            <input
-                                                type="text"
-                                                class="form-control auth-input"
-                                                id="cpf"
-                                                name="cpf"
-                                                maxlength="14"
-                                                placeholder="000.000.000-00"
-                                                inputmode="numeric"
-                                                autocomplete="off"
-                                                required
-                                            >
-                                        </div>
-
-                                        <div class="col-12">
-                                            <label class="form-label" for="name">Nome</label>
-                                            <input
-                                                type="text"
-                                                id="name"
-                                                name="name"
-                                                class="form-control auth-input"
-                                                placeholder="Seu nome completo"
-                                                autocomplete="name"
-                                                required
-                                            >
-                                        </div>
-
-                                        <div class="col-12">
-                                            <label class="form-label" for="email">E-mail</label>
-                                            <input
-                                                type="email"
-                                                id="email"
-                                                name="email"
-                                                class="form-control auth-input"
-                                                placeholder="seuemail@empresa.com"
-                                                autocomplete="email"
-                                                required
-                                            >
-                                        </div>
-
-                                        <div class="col-12">
-                                            <label class="form-label" for="password">Senha</label>
-                                            <input
-                                                type="password"
-                                                id="password"
-                                                name="password"
-                                                class="form-control auth-input"
-                                                placeholder="Crie uma senha"
-                                                autocomplete="new-password"
-                                                required
-                                            >
-                                        </div>
-
-                                        <div class="col-12">
-                                            <label class="form-label" for="confirm_password">Confirmar senha</label>
-                                            <input
-                                                type="password"
-                                                id="confirm_password"
-                                                name="confirm_password"
-                                                class="form-control auth-input"
-                                                placeholder="Repita a senha"
-                                                autocomplete="new-password"
-                                                required
-                                            >
-                                        </div>
-
-                                    </div>
-
-                                    <div class="d-grid mt-4 mb-3">
-                                        <button type="submit" class="btn btn-primary auth-submit-btn">
-                                            Cadastrar
-                                        </button>
-                                    </div>
-
-                                    <div class="auth-form-footer text-center">
-                                        <span class="text-muted">Já tem conta?</span>
-                                        <a href="{{ url_for('auth.login') }}" class="auth-link ms-1">
-                                            Entrar
-                                        </a>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-
-                    </div>
+                <div class="mb-3">
+                    <label class="form-label">Nome da empresa</label>
+                    <input
+                        type="text"
+                        name="company_name"
+                        class="form-control auth-input"
+                        placeholder="Digite o nome da empresa"
+                        value="{{ request.form.get('company_name', '') }}"
+                        required
+                    >
                 </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Seu nome</label>
+                    <input
+                        type="text"
+                        name="name"
+                        class="form-control auth-input"
+                        placeholder="Digite seu nome"
+                        value="{{ request.form.get('name', '') }}"
+                        required
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">E-mail</label>
+                    <input
+                        type="email"
+                        name="email"
+                        class="form-control auth-input"
+                        placeholder="Digite seu e-mail"
+                        value="{{ request.form.get('email', '') }}"
+                        required
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Senha</label>
+                    <input
+                        type="password"
+                        name="password"
+                        class="form-control auth-input"
+                        placeholder="Crie uma senha"
+                        required
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Confirmar senha</label>
+                    <input
+                        type="password"
+                        name="confirm_password"
+                        class="form-control auth-input"
+                        placeholder="Repita a senha"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 auth-btn">
+                    Criar conta
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p class="mb-0">
+                    Já tem conta?
+                    <a href="{{ url_for('auth.login') }}" class="auth-link">
+                        Entrar
+                    </a>
+                </p>
             </div>
         </div>
     </div>
 </section>
-{% endblock %}
-
-{% block page_scripts %}
-<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 {% endblock %}

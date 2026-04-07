@@ -2,6 +2,10 @@
 
 {% block title %}Clientes | ServHub{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/customers.css') }}">
+{% endblock %}
+
 {% block content %}
 <section class="customers-page">
     <div class="customers-header">
@@ -28,7 +32,7 @@
                             id="search"
                             name="search"
                             class="form-control customers-search-input"
-                            placeholder="Buscar cliente pelo nome"
+                            placeholder="Buscar por nome, telefone ou e-mail"
                             value="{{ search or '' }}"
                             autocomplete="off"
                         >
@@ -206,11 +210,49 @@
                 {% endfor %}
             </div>
 
+            {% if pagination and pagination.pages > 1 %}
+            <nav class="mt-4" aria-label="Paginação de clientes">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a
+                            class="page-link"
+                            href="{{ url_for('customers.list_customers', page=pagination.prev_num, search=search) if pagination.has_prev else '#' }}"
+                        >
+                            Anterior
+                        </a>
+                    </li>
+
+                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('customers.list_customers', page=page_num, search=search) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a
+                            class="page-link"
+                            href="{{ url_for('customers.list_customers', page=pagination.next_num, search=search) if pagination.has_next else '#' }}"
+                        >
+                            Próxima
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+
             {% else %}
             <div class="empty-state">
                 {% if search %}
                     <h5>Nenhum cliente encontrado para “{{ search }}”</h5>
-                    <p>Tente buscar com outro nome ou limpe o filtro para ver todos os clientes cadastrados.</p>
+                    <p>Tente buscar com outro termo ou limpe o filtro para ver todos os clientes cadastrados.</p>
                     <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-secondary">
                         Limpar busca
                     </a>

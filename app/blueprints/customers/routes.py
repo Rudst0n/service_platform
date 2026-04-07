@@ -14,17 +14,20 @@ from app.utils.permissions import require_company_role
 @login_required
 def list_customers():
     page = request.args.get("page", 1, type=int)
+    search = request.args.get("search", "").strip()
 
     pagination = CustomerService.list_paginated(
         company_id=current_user.company_id,
         page=page,
         per_page=10,
+        search=search,
     )
 
     return render_template(
         "customers/customers.html",
         customers=pagination.items,
         pagination=pagination,
+        search=search,
     )
 
 
