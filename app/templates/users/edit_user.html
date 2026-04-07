@@ -57,6 +57,10 @@
                                 name="cpf"
                                 id="cpf"
                                 class="form-control user-input"
+                                placeholder="000.000.000-00"
+                                maxlength="14"
+                                inputmode="numeric"
+                                autocomplete="off"
                                 value="{{ request.form.get('cpf', user.cpf or '') }}"
                             >
                         </div>
@@ -124,4 +128,8 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 {% endblock %}

@@ -19,46 +19,81 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                 <div class="mb-3">
-                    <label class="form-label">Nome da empresa</label>
+                    <label for="company_name" class="form-label">Nome da empresa</label>
                     <input
                         type="text"
                         name="company_name"
+                        id="company_name"
                         class="form-control auth-input"
                         placeholder="Digite o nome da empresa"
-                        value="{{ request.form.get('company_name', '') }}"
+                        value="{{ form_data.company_name if form_data else '' }}"
                         required
                     >
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Seu nome</label>
+                    <label for="cnpj" class="form-label">CNPJ</label>
+                    <input
+                        type="text"
+                        name="cnpj"
+                        id="cnpj"
+                        class="form-control auth-input"
+                        placeholder="00.000.000/0000-00"
+                        maxlength="18"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        value="{{ form_data.cnpj if form_data else '' }}"
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label for="name" class="form-label">Seu nome</label>
                     <input
                         type="text"
                         name="name"
+                        id="name"
                         class="form-control auth-input"
                         placeholder="Digite seu nome"
-                        value="{{ request.form.get('name', '') }}"
+                        value="{{ form_data.name if form_data else '' }}"
                         required
                     >
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">E-mail</label>
+                    <label for="cpf" class="form-label">CPF</label>
+                    <input
+                        type="text"
+                        name="cpf"
+                        id="cpf"
+                        class="form-control auth-input"
+                        placeholder="000.000.000-00"
+                        maxlength="14"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        value="{{ form_data.cpf if form_data else '' }}"
+                        required
+                    >
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">E-mail</label>
                     <input
                         type="email"
                         name="email"
+                        id="email"
                         class="form-control auth-input"
                         placeholder="Digite seu e-mail"
-                        value="{{ request.form.get('email', '') }}"
+                        value="{{ form_data.email if form_data else '' }}"
                         required
                     >
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Senha</label>
+                    <label for="password" class="form-label">Senha</label>
                     <input
                         type="password"
                         name="password"
+                        id="password"
                         class="form-control auth-input"
                         placeholder="Crie uma senha"
                         required
@@ -66,10 +101,11 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Confirmar senha</label>
+                    <label for="confirm_password" class="form-label">Confirmar senha</label>
                     <input
                         type="password"
                         name="confirm_password"
+                        id="confirm_password"
                         class="form-control auth-input"
                         placeholder="Repita a senha"
                         required
@@ -92,4 +128,8 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 {% endblock %}
