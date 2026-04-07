@@ -76,7 +76,24 @@ def handle_failed_login(user):
             )
             return
 
-    flash('E-mail ou senha inválidos.', 'danger')
+    flash('CPF, e-mail ou senha inválidos.', 'danger')
+
+
+def find_user_by_login(login_value):
+    login_value = (login_value or '').strip()
+
+    if not login_value:
+        return None
+
+    if '@' in login_value:
+        return User.query.filter_by(email=login_value.lower()).first()
+
+    cpf_digits = only_digits(login_value)
+    if len(cpf_digits) == 11:
+        cpf_formatted = format_cpf(cpf_digits)
+        return User.query.filter_by(cpf=cpf_formatted).first()
+
+    return None
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -85,14 +102,14 @@ def login():
         return redirect(url_for('main.dashboard'))
 
     if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
+        login_value = request.form.get('login', '').strip()
         password = request.form.get('password', '')
 
-        if not email or not password:
-            flash('Preencha e-mail e senha.', 'danger')
+        if not login_value or not password:
+            flash('Preencha CPF ou e-mail e senha.', 'danger')
             return render_template('auth/login.html')
 
-        user = User.query.filter_by(email=email).first()
+        user = find_user_by_login(login_value)
 
         if user and user.is_temporarily_locked:
             remaining_seconds = int((user.locked_until - datetime.utcnow()).total_seconds())

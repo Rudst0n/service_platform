@@ -57,6 +57,16 @@ def dashboard():
             Service.created_at.desc()
         ).limit(5).all()
 
+        total_revenue = db.session.query(
+            db.func.coalesce(db.func.sum(Service.price), 0)
+        ).filter(
+            Service.company_id == company.id,
+            Service.assigned_to_id == current_user.id,
+            Service.status == "finalizado"
+        ).scalar()
+
+        ticket_average = round(float(total_revenue or 0) / services_finalizado, 2) if services_finalizado > 0 else 0
+
         return render_template(
             "dashboard/dashboard_employee.html",
             total_services=total_services,
@@ -64,6 +74,8 @@ def dashboard():
             services_finalizado=services_finalizado,
             services_pendentes=services_pendentes,
             latest_services=latest_services,
+            total_revenue=total_revenue,
+            ticket_average=ticket_average,
         )
 
     if is_super_admin:
@@ -101,6 +113,8 @@ def dashboard():
         services_finalizado = Service.query.filter_by(status="finalizado").count()
         services_cancelado = Service.query.filter_by(status="cancelado").count()
 
+        ticket_average = round(float(total_revenue or 0) / services_finalizado, 2) if services_finalizado > 0 else 0
+
         return render_template(
             "dashboard/dashboard.html",
             company=None,
@@ -108,6 +122,7 @@ def dashboard():
             total_customers=total_customers,
             total_services=total_services,
             total_revenue=total_revenue,
+            ticket_average=ticket_average,
             latest_services=latest_services,
             top_customer=top_customer,
             services_orcamento=services_orcamento,
@@ -177,6 +192,8 @@ def dashboard():
         status="cancelado"
     ).count()
 
+    ticket_average = round(float(total_revenue or 0) / services_finalizado, 2) if services_finalizado > 0 else 0
+
     plan_usage = get_usage_data(company)
 
     return render_template(
@@ -186,6 +203,7 @@ def dashboard():
         total_customers=total_customers,
         total_services=total_services,
         total_revenue=total_revenue,
+        ticket_average=ticket_average,
         latest_services=latest_services,
         top_customer=top_customer,
         services_orcamento=services_orcamento,

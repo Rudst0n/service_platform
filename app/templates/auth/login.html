@@ -20,21 +20,24 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                 <div class="mb-3">
-                    <label class="form-label">E-mail</label>
+                    <label for="login" class="form-label">E-mail ou CPF</label>
                     <input
-                        type="email"
-                        name="email"
+                        type="text"
+                        name="login"
+                        id="login"
                         class="form-control auth-input"
-                        placeholder="Digite seu e-mail"
+                        placeholder="Digite seu e-mail ou CPF"
+                        value="{{ request.form.get('login', '') }}"
                         required
                     >
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Senha</label>
+                    <label for="password" class="form-label">Senha</label>
                     <input
                         type="password"
                         name="password"
+                        id="password"
                         class="form-control auth-input"
                         placeholder="Digite sua senha"
                         required
@@ -64,4 +67,8 @@
 
     </div>
 </section>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}?v=3"></script>
 {% endblock %}
