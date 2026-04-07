@@ -13,3 +13,4 @@ app/static/uploads/
 *.log
 migrations/__pycache__/
 .env
+*.zip
