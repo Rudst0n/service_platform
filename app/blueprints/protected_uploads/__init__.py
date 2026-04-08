@@ -1,0 +1,1 @@
+from .routes import protected_uploads_bp

@@ -249,7 +249,7 @@
                             {% for image in card.service.images %}
                             <div class="gallery-item">
                                 <img
-                                    src="{{ url_for('static', filename=image.file_path) }}"
+                                    src="{{ url_for('protected_uploads.service_image', image_id=image.id) }}"
                                     alt="Imagem do serviço"
                                     class="gallery-thumb"
                                 >

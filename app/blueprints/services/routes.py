@@ -1,11 +1,9 @@
 from decimal import Decimal, InvalidOperation
-import os
-from uuid import uuid4
+from pathlib import Path
 
 from flask import current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from PIL import Image, UnidentifiedImageError
-from werkzeug.utils import secure_filename
 
 from app.blueprints.services import services_bp
 from app.extensions import db
@@ -16,6 +14,7 @@ from app.models.user import User
 from app.utils.access import block_if_trial_expired
 from app.utils.audit import log_action
 from app.utils.plan_limits import is_limit_reached
+from app.utils.storage import save_private_file
 
 
 IMAGE_LIMITS = {
@@ -96,6 +95,10 @@ def validate_service_form(name, customer_id, assigned_to_id, price_raw):
             return False, "Preço inválido.", None, None, None
 
     return True, None, customer, assigned_user, price
+
+
+def get_private_image_path(image):
+    return Path(current_app.config["UPLOAD_FOLDER"]) / image.file_path
 
 
 @services_bp.route("/")
@@ -404,17 +407,13 @@ def upload_image(service_id):
             return redirect(url_for("services.list_services"))
 
     for file in valid_files:
-        original_name = secure_filename(file.filename)
-        extension = original_name.rsplit(".", 1)[1].lower()
-        new_filename = f"{uuid4().hex}.{extension}"
-        relative_path = os.path.join("uploads", "services", str(service.id), new_filename)
-        absolute_path = os.path.join(current_app.static_folder, relative_path)
-
-        os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
-        file.save(absolute_path)
+        saved_path = save_private_file(
+            file,
+            subfolder=f"companies/{current_user.company_id}/services/{service.id}"
+        )
 
         image = ServiceImage(
-            file_path=relative_path.replace("\\", "/"),
+            file_path=saved_path,
             service_id=service.id,
             company_id=current_user.company_id,
             uploaded_by="empresa",
@@ -454,10 +453,10 @@ def delete_image(image_id):
         flash("Você não tem permissão para excluir imagens deste serviço.", "danger")
         return redirect(url_for("services.list_services"))
 
-    absolute_path = os.path.join(current_app.static_folder, image.file_path)
-    if os.path.exists(absolute_path):
+    absolute_path = get_private_image_path(image)
+    if absolute_path.exists():
         try:
-            os.remove(absolute_path)
+            absolute_path.unlink()
         except OSError:
             pass
 
@@ -490,10 +489,10 @@ def delete_service(service_id):
     ).first_or_404()
 
     for image in service.images:
-        absolute_path = os.path.join(current_app.static_folder, image.file_path)
-        if os.path.exists(absolute_path):
+        absolute_path = get_private_image_path(image)
+        if absolute_path.exists():
             try:
-                os.remove(absolute_path)
+                absolute_path.unlink()
             except OSError:
                 pass
 
