@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
@@ -130,14 +131,21 @@ def list_services():
         query = Service.query.filter_by(
             company_id=current_user.company_id,
             assigned_to_id=current_user.id
-        )
+        ).filter(Service.status != "finalizado")
     else:
-        query = Service.query.filter_by(company_id=current_user.company_id)
+        query = Service.query.filter_by(
+            company_id=current_user.company_id
+        ).filter(Service.status != "finalizado")
 
     if search:
-        query = query.filter(Service.name.ilike(f"%{search}%"))
+        query = query.filter(
+            (Service.name.ilike(f"%{search}%")) |
+            (Service.request_code.ilike(f"%{search}%"))
+        )
+
     if status_filter:
         query = query.filter(Service.status == status_filter)
+
     if customer_filter:
         query = query.filter(Service.customer_id == customer_filter)
 
@@ -195,6 +203,56 @@ def list_services():
     )
 
 
+@services_bp.route("/history")
+@login_required
+def services_history():
+    page = request.args.get("page", 1, type=int)
+    search = request.args.get("search", "").strip()
+    customer_filter = request.args.get("customer_id", type=int)
+
+    if is_employee():
+        query = Service.query.filter_by(
+            company_id=current_user.company_id,
+            assigned_to_id=current_user.id,
+            status="finalizado",
+        )
+    else:
+        query = Service.query.filter_by(
+            company_id=current_user.company_id,
+            status="finalizado",
+        )
+
+    if search:
+        query = query.filter(
+            (Service.name.ilike(f"%{search}%")) |
+            (Service.request_code.ilike(f"%{search}%"))
+        )
+
+    if customer_filter:
+        query = query.filter(Service.customer_id == customer_filter)
+
+    pagination = (
+        query.order_by(Service.finished_at.desc(), Service.id.desc())
+        .paginate(page=page, per_page=10, error_out=False)
+    )
+
+    customers = (
+        Customer.query
+        .filter_by(company_id=current_user.company_id)
+        .order_by(Customer.name.asc())
+        .all()
+    )
+
+    return render_template(
+        "services/services_history.html",
+        services=pagination.items,
+        pagination=pagination,
+        customers=customers,
+        search=search,
+        customer_filter=customer_filter,
+    )
+
+
 @services_bp.route("/new", methods=["GET", "POST"])
 @login_required
 def new_service():
@@ -218,17 +276,24 @@ def new_service():
         price_raw = request.form.get("price", "").strip()
         customer_id = request.form.get("customer_id", "").strip()
         status = request.form.get("status", "orcamento").strip()
-        assigned_to_id = request.form.get("assigned_to_id", "").strip()
+        assigned_to_raw = request.form.get("assigned_to_id", "").strip()
 
         if is_employee():
             status = "orcamento"
-            assigned_to_id = str(current_user.id)
-        elif status not in VALID_STATUS:
-            status = "orcamento"
+            assigned_to_id = current_user.id
+            valid, error, customer, _, price = validate_service_form(
+                name, customer_id, assigned_to_id, price_raw
+            )
+            assigned_user_id = current_user.id
+        else:
+            if status not in VALID_STATUS:
+                status = "orcamento"
 
-        valid, error, customer, assigned_user, price = validate_service_form(
-            name, customer_id, assigned_to_id, price_raw
-        )
+            valid, error, customer, assigned_user, price = validate_service_form(
+                name, customer_id, assigned_to_raw, price_raw
+            )
+            assigned_user_id = assigned_user.id if assigned_user else None
+
         if not valid:
             flash(error, "danger")
             return render_template(
@@ -238,14 +303,26 @@ def new_service():
                 service=None,
             )
 
+        last_service = (
+            Service.query
+            .filter_by(company_id=current_user.company_id)
+            .order_by(Service.request_number.desc(), Service.id.desc())
+            .first()
+        )
+
+        next_number = 1 if not last_service else last_service.request_number + 1
+        request_code = f"REQ-{str(next_number).zfill(3)}"
+
         service = Service(
+            request_number=next_number,
+            request_code=request_code,
             name=name,
             description=description or None,
             price=price,
             status=status,
             customer_id=customer.id,
             company_id=current_user.company_id,
-            assigned_to_id=assigned_user.id if assigned_user else None,
+            assigned_to_id=assigned_user_id,
         )
 
         db.session.add(service)
@@ -255,14 +332,14 @@ def new_service():
             "create_service",
             "service",
             service.id,
-            f"Serviço {name} criado com status {status}.",
+            f"Serviço {request_code} {name} criado com status {status}.",
             company_id=current_user.company_id,
             user_id=current_user.id,
         )
 
         db.session.commit()
 
-        flash("Serviço criado com sucesso.", "success")
+        flash(f"Serviço {request_code} criado com sucesso.", "success")
         return redirect(url_for("services.list_services"))
 
     return render_template(
@@ -334,11 +411,16 @@ def edit_service(service_id):
             if status in EMPLOYEE_ALLOWED_STATUS:
                 service.status = status
 
+        if service.status == "finalizado" and service.finished_at is None:
+            service.finished_at = datetime.utcnow()
+        elif service.status != "finalizado":
+            service.finished_at = None
+
         log_action(
             "update_service",
             "service",
             service.id,
-            f"Serviço {service.name} atualizado.",
+            f"Serviço {service.request_code} {service.name} atualizado.",
             company_id=current_user.company_id,
             user_id=current_user.id,
         )
@@ -377,11 +459,16 @@ def update_status(service_id):
 
     service.status = status
 
+    if status == "finalizado":
+        service.finished_at = datetime.utcnow()
+    else:
+        service.finished_at = None
+
     log_action(
         "update_service_status",
         "service",
         service.id,
-        f"Status alterado para {status}.",
+        f"Status do serviço {service.request_code} alterado para {status}.",
         company_id=current_user.company_id,
         user_id=current_user.id,
     )
@@ -453,7 +540,7 @@ def upload_image(service_id):
         "upload_service_image",
         "service",
         service.id,
-        f"Imagem adicionada ao serviço {service.name}.",
+        f"Imagem adicionada ao serviço {service.request_code} {service.name}.",
         company_id=current_user.company_id,
         user_id=current_user.id,
     )
@@ -489,7 +576,7 @@ def delete_image(image_id):
         "delete_service_image",
         "service_image",
         image.id,
-        f"Imagem removida do serviço {service.name}.",
+        f"Imagem removida do serviço {service.request_code} {service.name}.",
         company_id=current_user.company_id,
         user_id=current_user.id,
     )
@@ -522,7 +609,7 @@ def delete_service(service_id):
         "delete_service",
         "service",
         service.id,
-        f"Serviço {service.name} excluído.",
+        f"Serviço {service.request_code} {service.name} excluído.",
         company_id=current_user.company_id,
         user_id=current_user.id,
     )
