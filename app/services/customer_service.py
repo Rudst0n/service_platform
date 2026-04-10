@@ -6,6 +6,7 @@ from app.models.customer import Customer
 from app.models.service import Service
 from app.utils.audit import log_action
 from app.utils.normalizer import normalize_email, normalize_phone, normalize_text, only_digits
+from app.utils.security import is_valid_email
 
 
 class CustomerServiceError(Exception):
@@ -17,13 +18,60 @@ class CustomerValidationError(CustomerServiceError):
 
 
 class CustomerService:
+    PLACEHOLDER_EMAIL_WORDS = {
+        "teste",
+        "test",
+        "fake",
+        "falso",
+        "email",
+        "exemplo",
+        "example",
+        "kkkk",
+        "kkkkk",
+        "abc",
+        "asdf",
+        "qwerty",
+    }
+
     @staticmethod
     def normalize_form_data(form):
+        raw_phone = form.get("phone")
+        raw_email = form.get("email")
+
+        phone_digits = only_digits(raw_phone)
+        normalized_phone = normalize_phone(phone_digits) if phone_digits else None
+        normalized_email = normalize_email(raw_email)
+
         return {
             "name": normalize_text(form.get("name")),
-            "phone": normalize_phone(form.get("phone")),
-            "email": normalize_email(form.get("email")),
+            "phone": normalized_phone,
+            "email": normalized_email,
         }
+
+    @staticmethod
+    def _looks_like_placeholder_email(email):
+        if not email or "@" not in email:
+            return False
+
+        local_part, domain = email.split("@", 1)
+        domain_name = domain.split(".", 1)[0] if "." in domain else domain
+
+        local_clean = "".join(ch for ch in local_part.lower() if ch.isalnum())
+        domain_clean = "".join(ch for ch in domain_name.lower() if ch.isalnum())
+
+        if local_clean in CustomerService.PLACEHOLDER_EMAIL_WORDS:
+            return True
+
+        if domain_clean in CustomerService.PLACEHOLDER_EMAIL_WORDS:
+            return True
+
+        if local_clean and len(set(local_clean)) == 1 and len(local_clean) >= 4:
+            return True
+
+        if domain_clean and len(set(domain_clean)) == 1 and len(domain_clean) >= 4:
+            return True
+
+        return False
 
     @staticmethod
     def validate_data(data):
@@ -37,13 +85,24 @@ class CustomerService:
         if len(name) < 3:
             raise CustomerValidationError("O nome do cliente deve ter pelo menos 3 caracteres.")
 
+        if not phone and not email:
+            raise CustomerValidationError("Informe pelo menos um contato válido: telefone ou e-mail.")
+
         if phone:
             phone_digits = only_digits(phone)
-            if phone_digits and len(phone_digits) not in (10, 11):
+
+            if not phone_digits:
+                raise CustomerValidationError("Telefone inválido. Informe apenas números.")
+
+            if len(phone_digits) not in (10, 11):
                 raise CustomerValidationError("Telefone inválido. Informe um número com DDD.")
 
-        if email and "@" not in email:
-            raise CustomerValidationError("E-mail inválido.")
+        if email:
+            if not is_valid_email(email):
+                raise CustomerValidationError("E-mail inválido.")
+
+            if CustomerService._looks_like_placeholder_email(email):
+                raise CustomerValidationError("Informe um e-mail válido do cliente.")
 
     @staticmethod
     def _find_duplicate(company_id, data, ignore_customer_id=None):

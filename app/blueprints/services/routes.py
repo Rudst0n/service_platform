@@ -13,6 +13,15 @@ from app.models.service_image import ServiceImage
 from app.models.user import User
 from app.utils.access import block_if_trial_expired
 from app.utils.audit import log_action
+from app.utils.permissions import (
+    can_create_service,
+    can_delete_service,
+    can_edit_service,
+    can_update_service_status,
+    can_upload_service_image,
+    is_company_admin,
+    is_employee,
+)
 from app.utils.plan_limits import is_limit_reached
 from app.utils.storage import save_private_file
 
@@ -26,6 +35,7 @@ IMAGE_LIMITS = {
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 ALLOWED_IMAGE_TYPES = {"orcamento", "antes", "depois"}
 VALID_STATUS = ["orcamento", "aprovado", "em_andamento", "finalizado", "cancelado"]
+EMPLOYEE_ALLOWED_STATUS = {"em_andamento", "finalizado"}
 
 
 def allowed_image_file(filename):
@@ -61,6 +71,13 @@ def get_service_form_options():
         .all()
     )
     return customers, users
+
+
+def get_service_or_404(service_id):
+    return Service.query.filter_by(
+        id=service_id,
+        company_id=current_user.company_id
+    ).first_or_404()
 
 
 def validate_service_form(name, customer_id, assigned_to_id, price_raw):
@@ -109,7 +126,7 @@ def list_services():
     status_filter = request.args.get("status", "").strip()
     customer_filter = request.args.get("customer_id", type=int)
 
-    if current_user.company_role == "funcionario":
+    if is_employee():
         query = Service.query.filter_by(
             company_id=current_user.company_id,
             assigned_to_id=current_user.id
@@ -181,7 +198,7 @@ def list_services():
 @services_bp.route("/new", methods=["GET", "POST"])
 @login_required
 def new_service():
-    if current_user.company_role == "funcionario":
+    if not can_create_service():
         flash("Você não tem permissão para cadastrar serviços.", "danger")
         return redirect(url_for("services.list_services"))
 
@@ -203,7 +220,10 @@ def new_service():
         status = request.form.get("status", "orcamento").strip()
         assigned_to_id = request.form.get("assigned_to_id", "").strip()
 
-        if status not in VALID_STATUS:
+        if is_employee():
+            status = "orcamento"
+            assigned_to_id = str(current_user.id)
+        elif status not in VALID_STATUS:
             status = "orcamento"
 
         valid, error, customer, assigned_user, price = validate_service_form(
@@ -256,14 +276,11 @@ def new_service():
 @services_bp.route("/<int:service_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_service(service_id):
-    if current_user.company_role == "funcionario":
-        flash("Você não tem permissão para editar serviços.", "danger")
-        return redirect(url_for("services.list_services"))
+    service = get_service_or_404(service_id)
 
-    service = Service.query.filter_by(
-        id=service_id,
-        company_id=current_user.company_id
-    ).first_or_404()
+    if not can_edit_service(service):
+        flash("Você não tem permissão para editar este serviço.", "danger")
+        return redirect(url_for("services.list_services"))
 
     customers, users = get_service_form_options()
 
@@ -276,11 +293,22 @@ def edit_service(service_id):
         description = request.form.get("description", "").strip()
         price_raw = request.form.get("price", "").strip()
         customer_id = request.form.get("customer_id", "").strip()
-        status = request.form.get("status", "orcamento").strip()
+        status = request.form.get("status", service.status).strip()
         assigned_to_id = request.form.get("assigned_to_id", "").strip()
 
-        if status not in VALID_STATUS:
-            status = service.status
+        if is_employee():
+            assigned_to_id = str(service.assigned_to_id) if service.assigned_to_id else ""
+            if status != service.status and status not in EMPLOYEE_ALLOWED_STATUS:
+                flash("Você não pode definir esse status.", "danger")
+                return render_template(
+                    "services/new_service.html",
+                    customers=customers,
+                    users=users,
+                    service=service,
+                )
+        else:
+            if status not in VALID_STATUS:
+                status = service.status
 
         valid, error, customer, assigned_user, price = validate_service_form(
             name, customer_id, assigned_to_id, price_raw
@@ -297,9 +325,14 @@ def edit_service(service_id):
         service.name = name
         service.description = description or None
         service.price = price
-        service.status = status
         service.customer_id = customer.id
-        service.assigned_to_id = assigned_user.id if assigned_user else None
+
+        if is_company_admin() or current_user.is_super_admin:
+            service.status = status
+            service.assigned_to_id = assigned_user.id if assigned_user else None
+        else:
+            if status in EMPLOYEE_ALLOWED_STATUS:
+                service.status = status
 
         log_action(
             "update_service",
@@ -326,18 +359,16 @@ def edit_service(service_id):
 @services_bp.route("/<int:service_id>/update-status", methods=["POST"])
 @login_required
 def update_status(service_id):
-    service = Service.query.filter_by(
-        id=service_id,
-        company_id=current_user.company_id
-    ).first_or_404()
+    service = get_service_or_404(service_id)
 
-    if current_user.company_role == "funcionario":
-        if service.assigned_to_id != current_user.id:
-            flash("Você não tem permissão para alterar este serviço.", "danger")
-            return redirect(url_for("services.list_services"))
-        allowed_status = ["em_andamento", "finalizado"]
+    if not can_update_service_status(service):
+        flash("Você não tem permissão para alterar este serviço.", "danger")
+        return redirect(url_for("services.list_services"))
+
+    if is_employee():
+        allowed_status = EMPLOYEE_ALLOWED_STATUS
     else:
-        allowed_status = VALID_STATUS
+        allowed_status = set(VALID_STATUS)
 
     status = request.form.get("status", "").strip()
     if status not in allowed_status:
@@ -364,12 +395,9 @@ def update_status(service_id):
 @services_bp.route("/<int:service_id>/upload", methods=["POST"])
 @login_required
 def upload_image(service_id):
-    service = Service.query.filter_by(
-        id=service_id,
-        company_id=current_user.company_id
-    ).first_or_404()
+    service = get_service_or_404(service_id)
 
-    if current_user.company_role == "funcionario" and service.assigned_to_id != current_user.id:
+    if not can_upload_service_image(service):
         flash("Você não tem permissão para enviar imagens para este serviço.", "danger")
         return redirect(url_for("services.list_services"))
 
@@ -444,12 +472,9 @@ def delete_image(image_id):
         company_id=current_user.company_id
     ).first_or_404()
 
-    service = Service.query.filter_by(
-        id=image.service_id,
-        company_id=current_user.company_id
-    ).first_or_404()
+    service = get_service_or_404(image.service_id)
 
-    if current_user.company_role == "funcionario" and service.assigned_to_id != current_user.id:
+    if not can_upload_service_image(service):
         flash("Você não tem permissão para excluir imagens deste serviço.", "danger")
         return redirect(url_for("services.list_services"))
 
@@ -479,14 +504,11 @@ def delete_image(image_id):
 @services_bp.route("/<int:service_id>/delete", methods=["POST"])
 @login_required
 def delete_service(service_id):
-    if current_user.company_role == "funcionario":
+    if not can_delete_service():
         flash("Você não tem permissão para excluir serviços.", "danger")
         return redirect(url_for("services.list_services"))
 
-    service = Service.query.filter_by(
-        id=service_id,
-        company_id=current_user.company_id
-    ).first_or_404()
+    service = get_service_or_404(service_id)
 
     for image in service.images:
         absolute_path = get_private_image_path(image)

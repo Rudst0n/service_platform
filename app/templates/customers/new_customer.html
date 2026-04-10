@@ -7,7 +7,6 @@
 {% endblock %}
 
 {% block content %}
-
 <section class="customer-form-page">
     <div class="customer-form-wrapper">
         <div class="customer-form-header">
@@ -48,9 +47,11 @@
                                 name="phone"
                                 id="phone"
                                 class="form-control customer-input"
-                                placeholder="Digite o telefone"
-                                inputmode="tel"
+                                placeholder="(41) 99999-9999"
+                                maxlength="15"
+                                inputmode="numeric"
                                 value="{{ form_data.phone if form_data else '' }}"
+                                oninput="formatPhone(this)"
                             >
                         </div>
 
@@ -82,5 +83,24 @@
         </div>
     </div>
 </section>
+{% endblock %}
 
+{% block page_scripts %}
+<script>
+function formatPhone(input) {
+    let value = input.value.replace(/\D/g, "").slice(0, 11);
+
+    if (value.length > 10) {
+        value = value.replace(/^(\d{2})(\d{5})(\d{0,4}).*/, "($1) $2-$3");
+    } else if (value.length > 6) {
+        value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, "($1) $2-$3");
+    } else if (value.length > 2) {
+        value = value.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
+    } else if (value.length > 0) {
+        value = value.replace(/^(\d*)/, "($1");
+    }
+
+    input.value = value;
+}
+</script>
 {% endblock %}

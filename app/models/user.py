@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -13,16 +13,16 @@ class User(UserMixin, db.Model):
     cpf = db.Column(db.String(14), unique=True, nullable=True)
     password_hash = db.Column(db.String(255), nullable=False)
 
-    system_role = db.Column(db.String(50), nullable=False, default='company_user')
-    company_role = db.Column(db.String(50), nullable=False, default='admin_empresa')
+    system_role = db.Column(db.String(50), nullable=False, default="company_user")
+    company_role = db.Column(db.String(50), nullable=False, default="funcionario")
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     email_confirmed = db.Column(db.Boolean, nullable=False, default=False)
 
     failed_login_attempts = db.Column(db.Integer, nullable=False, default=0)
     locked_until = db.Column(db.DateTime, nullable=True)
 
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
-    company = db.relationship('Company', backref='users')
+    company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=False)
+    company = db.relationship("Company", backref="users")
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login_at = db.Column(db.DateTime)
@@ -48,5 +48,14 @@ class User(UserMixin, db.Model):
     def is_temporarily_locked(self):
         return bool(self.locked_until and self.locked_until > datetime.utcnow())
 
+    @property
+    def is_super_admin(self):
+        return self.system_role == "super_admin"
 
-from datetime import timedelta
+    @property
+    def is_company_admin(self):
+        return self.company_role == "admin_empresa"
+
+    @property
+    def is_employee(self):
+        return self.company_role == "funcionario"

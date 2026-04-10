@@ -1,3 +1,7 @@
+<a href="{{ url_for('admin.edit_company', company_id=item.company.id) }}" class="btn btn-sm btn-primary w-100">
+    Editar
+</a>
+
 <form method="POST" action="{{ url_for('admin.activate_company', company_id=item.company.id) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button class="btn btn-sm btn-success w-100">Ativar</button>

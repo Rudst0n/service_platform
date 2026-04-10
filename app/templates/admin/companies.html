@@ -107,6 +107,10 @@
 
                             <td class="text-end">
                                 <div class="companies-actions justify-content-end">
+                                    <a href="{{ url_for('admin.edit_company', company_id=item.company.id) }}" class="btn btn-sm btn-primary">
+                                        Editar
+                                    </a>
+
                                     {% if item.company.status != "active" %}
                                     <form method="POST" action="{{ url_for('admin.activate_company', company_id=item.company.id) }}">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -197,6 +201,10 @@
                     </div>
 
                     <div class="companies-actions mt-3">
+                        <a href="{{ url_for('admin.edit_company', company_id=item.company.id) }}" class="btn btn-primary w-100">
+                            Editar empresa
+                        </a>
+
                         {% if item.company.status != "active" %}
                         <form method="POST" action="{{ url_for('admin.activate_company', company_id=item.company.id) }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

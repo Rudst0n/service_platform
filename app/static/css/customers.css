@@ -334,6 +334,67 @@
     border: 0 !important;
 }
 
+.customers-table {
+    background: transparent;
+    color: #e9ecef;
+}
+
+.customers-table thead {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.customers-table tbody tr {
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.customers-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.customers-table td,
+.customers-table th {
+    color: #e9ecef;
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+/* aprovado */
+.status-aprovado {
+    background: rgba(25, 135, 84, 0.15);
+    color: #198754;
+}
+
+/* em andamento */
+.status-em_andamento {
+    background: rgba(255, 193, 7, 0.15);
+    color: #ffc107;
+}
+
+/* cancelado */
+.status-cancelado {
+    background: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+}
+
+/* finalizado */
+.status-finalizado {
+    background: rgba(13, 110, 253, 0.15);
+    color: #0d6efd;
+}
+
+/* orçamento */
+.status-orcamento {
+    background: rgba(108, 117, 125, 0.15);
+    color: #6c757d;
+}
+
 @media (max-width: 991.98px) {
     .customers-table thead th,
     .users-table thead th,

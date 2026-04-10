@@ -15,8 +15,9 @@ from app.utils.security import (
     only_digits,
 )
 
-ALLOWED_COMPANY_ROLES = {'admin_empresa', 'funcionario', 'visualizador'}
-DEFAULT_RESET_PASSWORD = '12345678'
+ALLOWED_COMPANY_ROLES = {"funcionario", "visualizador"}
+DEFAULT_COMPANY_ROLE = "funcionario"
+DEFAULT_RESET_PASSWORD = "12345678"
 
 
 def get_company_users_query():
@@ -25,6 +26,13 @@ def get_company_users_query():
 
 def validate_company_role(company_role):
     return company_role in ALLOWED_COMPANY_ROLES
+
+
+def sanitize_company_role(company_role):
+    company_role = normalize_text(company_role or DEFAULT_COMPANY_ROLE)
+    if not validate_company_role(company_role):
+        return DEFAULT_COMPANY_ROLE
+    return company_role
 
 
 def find_duplicate_user(email, cpf, ignore_user_id=None):
@@ -47,24 +55,24 @@ def find_duplicate_user(email, cpf, ignore_user_id=None):
     return query.first()
 
 
-@users_bp.route('/')
+@users_bp.route("/")
 @login_required
-@require_company_role('admin_empresa')
+@require_company_role("admin_empresa")
 def list_users():
-    page = request.args.get('page', 1, type=int)
-    search = request.args.get('search', '').strip()
+    page = request.args.get("page", 1, type=int)
+    search = request.args.get("search", "").strip()
 
     query = get_company_users_query()
 
     if search:
         search_digits = only_digits(search)
         filters = [
-            User.name.ilike(f'%{search}%'),
-            User.email.ilike(f'%{search}%'),
+            User.name.ilike(f"%{search}%"),
+            User.email.ilike(f"%{search}%"),
         ]
 
         if search_digits:
-            filters.append(User.cpf.ilike(f'%{search_digits}%'))
+            filters.append(User.cpf.ilike(f"%{search_digits}%"))
 
         query = query.filter(or_(*filters))
 
@@ -74,59 +82,55 @@ def list_users():
     )
 
     return render_template(
-        'users/users.html',
+        "users/users.html",
         users=pagination.items,
         pagination=pagination,
         search=search,
     )
 
 
-@users_bp.route('/new', methods=['GET', 'POST'])
+@users_bp.route("/new", methods=["GET", "POST"])
 @login_required
-@require_company_role('admin_empresa')
+@require_company_role("admin_empresa")
 def new_user():
-    if request.method == 'POST':
-        name = normalize_text(request.form.get('name'))
-        email = normalize_email(request.form.get('email'))
-        cpf = format_cpf(request.form.get('cpf', ''))
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
-        company_role = normalize_text(request.form.get('company_role', 'funcionario'))
-        is_active = request.form.get('is_active') == 'on'
+    if request.method == "POST":
+        name = normalize_text(request.form.get("name"))
+        email = normalize_email(request.form.get("email"))
+        cpf = format_cpf(request.form.get("cpf", ""))
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+        company_role = sanitize_company_role(request.form.get("company_role", DEFAULT_COMPANY_ROLE))
+        is_active = request.form.get("is_active") == "on"
 
         if not name or not email or not password or not confirm_password:
-            flash('Preencha todos os campos obrigatórios.', 'danger')
-            return render_template('users/new_user.html')
+            flash("Preencha todos os campos obrigatórios.", "danger")
+            return render_template("users/new_user.html")
 
         if not is_valid_email(email):
-            flash('E-mail inválido.', 'danger')
-            return render_template('users/new_user.html')
+            flash("E-mail inválido.", "danger")
+            return render_template("users/new_user.html")
 
         valid_password, password_error = is_strong_password(password)
         if not valid_password:
-            flash(password_error, 'danger')
-            return render_template('users/new_user.html')
+            flash(password_error, "danger")
+            return render_template("users/new_user.html")
 
         if password != confirm_password:
-            flash('As senhas não coincidem.', 'danger')
-            return render_template('users/new_user.html')
-
-        if not validate_company_role(company_role):
-            flash('Perfil inválido.', 'danger')
-            return render_template('users/new_user.html')
+            flash("As senhas não coincidem.", "danger")
+            return render_template("users/new_user.html")
 
         cpf_digits = only_digits(cpf)
         if cpf and (not cpf_digits or len(cpf_digits) != 11):
-            flash('CPF inválido.', 'danger')
-            return render_template('users/new_user.html')
+            flash("CPF inválido.", "danger")
+            return render_template("users/new_user.html")
 
         duplicate_user = find_duplicate_user(email=email, cpf=cpf if cpf else None)
         if duplicate_user:
             if email and duplicate_user.email == email:
-                flash('Já existe um usuário com este e-mail na sua empresa.', 'danger')
+                flash("Já existe um usuário com este e-mail na sua empresa.", "danger")
             else:
-                flash('Já existe um usuário com este CPF na sua empresa.', 'danger')
-            return render_template('users/new_user.html')
+                flash("Já existe um usuário com este CPF na sua empresa.", "danger")
+            return render_template("users/new_user.html")
 
         try:
             user = User(
@@ -134,7 +138,7 @@ def new_user():
                 email=email,
                 cpf=cpf if cpf else None,
                 company_id=current_user.company_id,
-                system_role='company_user',
+                system_role="company_user",
                 company_role=company_role,
                 is_active=is_active,
                 email_confirmed=False,
@@ -145,57 +149,53 @@ def new_user():
             db.session.flush()
 
             log_action(
-                'create_user',
-                'user',
+                "create_user",
+                "user",
                 user.id,
-                f'Usuário {user.name} criado.',
+                f"Usuário {user.name} criado.",
                 company_id=current_user.company_id,
                 user_id=current_user.id,
             )
 
             db.session.commit()
 
-            flash('Usuário criado com sucesso.', 'success')
-            return redirect(url_for('users.list_users'))
+            flash("Usuário criado com sucesso.", "success")
+            return redirect(url_for("users.list_users"))
 
         except Exception:
             db.session.rollback()
-            flash('Erro ao criar usuário.', 'danger')
+            flash("Erro ao criar usuário.", "danger")
 
-    return render_template('users/new_user.html')
+    return render_template("users/new_user.html")
 
 
-@users_bp.route('/edit/<int:user_id>', methods=['GET', 'POST'])
+@users_bp.route("/edit/<int:user_id>", methods=["GET", "POST"])
 @login_required
-@require_company_role('admin_empresa')
+@require_company_role("admin_empresa")
 def edit_user(user_id):
     user = get_company_users_query().filter_by(id=user_id).first_or_404()
 
-    if request.method == 'POST':
-        name = normalize_text(request.form.get('name'))
-        email = normalize_email(request.form.get('email'))
-        cpf = format_cpf(request.form.get('cpf', ''))
-        company_role = normalize_text(request.form.get('company_role', user.company_role))
-        is_active = request.form.get('is_active') == 'on'
-        new_password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
+    if request.method == "POST":
+        name = normalize_text(request.form.get("name"))
+        email = normalize_email(request.form.get("email"))
+        cpf = format_cpf(request.form.get("cpf", ""))
+        company_role = sanitize_company_role(request.form.get("company_role", user.company_role))
+        is_active = request.form.get("is_active") == "on"
+        new_password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
 
         if not name or not email:
-            flash('Nome e e-mail são obrigatórios.', 'danger')
-            return render_template('users/edit_user.html', user=user)
+            flash("Nome e e-mail são obrigatórios.", "danger")
+            return render_template("users/edit_user.html", user=user)
 
         if not is_valid_email(email):
-            flash('E-mail inválido.', 'danger')
-            return render_template('users/edit_user.html', user=user)
-
-        if not validate_company_role(company_role):
-            flash('Perfil inválido.', 'danger')
-            return render_template('users/edit_user.html', user=user)
+            flash("E-mail inválido.", "danger")
+            return render_template("users/edit_user.html", user=user)
 
         cpf_digits = only_digits(cpf)
         if cpf and (not cpf_digits or len(cpf_digits) != 11):
-            flash('CPF inválido.', 'danger')
-            return render_template('users/edit_user.html', user=user)
+            flash("CPF inválido.", "danger")
+            return render_template("users/edit_user.html", user=user)
 
         duplicate_user = find_duplicate_user(
             email=email,
@@ -204,20 +204,20 @@ def edit_user(user_id):
         )
         if duplicate_user:
             if email and duplicate_user.email == email:
-                flash('Já existe outro usuário com este e-mail na sua empresa.', 'danger')
+                flash("Já existe outro usuário com este e-mail na sua empresa.", "danger")
             else:
-                flash('Já existe outro usuário com este CPF na sua empresa.', 'danger')
-            return render_template('users/edit_user.html', user=user)
+                flash("Já existe outro usuário com este CPF na sua empresa.", "danger")
+            return render_template("users/edit_user.html", user=user)
 
         if new_password:
             valid_password, password_error = is_strong_password(new_password)
             if not valid_password:
-                flash(password_error, 'danger')
-                return render_template('users/edit_user.html', user=user)
+                flash(password_error, "danger")
+                return render_template("users/edit_user.html", user=user)
 
             if new_password != confirm_password:
-                flash('As senhas não coincidem.', 'danger')
-                return render_template('users/edit_user.html', user=user)
+                flash("As senhas não coincidem.", "danger")
+                return render_template("users/edit_user.html", user=user)
 
         try:
             user.name = name
@@ -231,120 +231,116 @@ def edit_user(user_id):
                 user.reset_login_lock()
 
             log_action(
-                'update_user',
-                'user',
+                "update_user",
+                "user",
                 user.id,
-                f'Usuário {user.name} atualizado.',
+                f"Usuário {user.name} atualizado.",
                 company_id=current_user.company_id,
                 user_id=current_user.id,
             )
 
             db.session.commit()
 
-            flash('Usuário atualizado com sucesso.', 'success')
-            return redirect(url_for('users.list_users'))
+            flash("Usuário atualizado com sucesso.", "success")
+            return redirect(url_for("users.list_users"))
 
         except Exception:
             db.session.rollback()
-            flash('Erro ao atualizar usuário.', 'danger')
+            flash("Erro ao atualizar usuário.", "danger")
 
-    return render_template('users/edit_user.html', user=user)
+    return render_template("users/edit_user.html", user=user)
 
 
-@users_bp.route('/<int:user_id>/update-role', methods=['POST'])
+@users_bp.route("/<int:user_id>/update-role", methods=["POST"])
 @login_required
-@require_company_role('admin_empresa')
+@require_company_role("admin_empresa")
 def update_user_role(user_id):
     user = get_company_users_query().filter_by(id=user_id).first_or_404()
 
-    company_role = normalize_text(request.form.get('company_role'))
-
-    if not validate_company_role(company_role):
-        flash('Perfil inválido.', 'danger')
-        return redirect(url_for('users.list_users'))
+    company_role = sanitize_company_role(request.form.get("company_role"))
 
     try:
         user.company_role = company_role
 
         log_action(
-            'update_user_role',
-            'user',
+            "update_user_role",
+            "user",
             user.id,
-            f'Perfil alterado para {company_role}',
+            f"Perfil alterado para {company_role}",
             company_id=current_user.company_id,
             user_id=current_user.id,
         )
 
         db.session.commit()
 
-        flash('Perfil atualizado com sucesso.', 'success')
+        flash("Perfil atualizado com sucesso.", "success")
 
     except Exception:
         db.session.rollback()
-        flash('Erro ao atualizar perfil.', 'danger')
+        flash("Erro ao atualizar perfil.", "danger")
 
-    return redirect(url_for('users.list_users'))
+    return redirect(url_for("users.list_users"))
 
 
-@users_bp.route('/<int:user_id>/toggle-status', methods=['POST'])
+@users_bp.route("/<int:user_id>/toggle-status", methods=["POST"])
 @login_required
-@require_company_role('admin_empresa')
+@require_company_role("admin_empresa")
 def toggle_user_status(user_id):
     user = get_company_users_query().filter_by(id=user_id).first_or_404()
 
     if user.id == current_user.id:
-        flash('Você não pode alterar seu próprio status.', 'warning')
-        return redirect(url_for('users.list_users'))
+        flash("Você não pode alterar seu próprio status.", "warning")
+        return redirect(url_for("users.list_users"))
 
     try:
         user.is_active = not user.is_active
 
         log_action(
-            'toggle_user_status',
-            'user',
+            "toggle_user_status",
+            "user",
             user.id,
-            'Status alterado',
+            "Status alterado",
             company_id=current_user.company_id,
             user_id=current_user.id,
         )
 
         db.session.commit()
 
-        flash('Status atualizado.', 'success')
+        flash("Status atualizado.", "success")
 
     except Exception:
         db.session.rollback()
-        flash('Erro ao alterar status.', 'danger')
+        flash("Erro ao alterar status.", "danger")
 
-    return redirect(url_for('users.list_users'))
+    return redirect(url_for("users.list_users"))
 
 
-@users_bp.route('/<int:user_id>/toggle-active', methods=['POST'])
+@users_bp.route("/<int:user_id>/toggle-active", methods=["POST"])
 @login_required
-@require_company_role('admin_empresa')
+@require_company_role("admin_empresa")
 def toggle_user_active(user_id):
     return toggle_user_status(user_id)
 
 
-@users_bp.route('/<int:user_id>/reset-password', methods=['POST'])
+@users_bp.route("/<int:user_id>/reset-password", methods=["POST"])
 @login_required
-@require_company_role('admin_empresa')
+@require_company_role("admin_empresa")
 def reset_user_password(user_id):
     user = get_company_users_query().filter_by(id=user_id).first_or_404()
 
     if user.id == current_user.id:
-        flash('Use a opção de alteração de senha no seu próprio perfil.', 'warning')
-        return redirect(url_for('users.list_users'))
+        flash("Use a opção de alteração de senha no seu próprio perfil.", "warning")
+        return redirect(url_for("users.list_users"))
 
     try:
         user.set_password(DEFAULT_RESET_PASSWORD)
         user.reset_login_lock()
 
         log_action(
-            'reset_user_password',
-            'user',
+            "reset_user_password",
+            "user",
             user.id,
-            f'Senha do usuário {user.name} redefinida pelo administrador.',
+            f"Senha do usuário {user.name} redefinida pelo administrador.",
             company_id=current_user.company_id,
             user_id=current_user.id,
         )
@@ -352,33 +348,33 @@ def reset_user_password(user_id):
         db.session.commit()
 
         flash(
-            f'Senha redefinida. Nova senha: {DEFAULT_RESET_PASSWORD}',
-            'success'
+            f"Senha redefinida. Nova senha: {DEFAULT_RESET_PASSWORD}",
+            "success",
         )
 
     except Exception:
         db.session.rollback()
-        flash('Erro ao redefinir senha.', 'danger')
+        flash("Erro ao redefinir senha.", "danger")
 
-    return redirect(url_for('users.list_users'))
+    return redirect(url_for("users.list_users"))
 
 
-@users_bp.route('/delete/<int:user_id>', methods=['POST'])
+@users_bp.route("/delete/<int:user_id>", methods=["POST"])
 @login_required
-@require_company_role('admin_empresa')
+@require_company_role("admin_empresa")
 def delete_user(user_id):
     user = get_company_users_query().filter_by(id=user_id).first_or_404()
 
     if user.id == current_user.id:
-        flash('Você não pode excluir seu próprio usuário.', 'warning')
-        return redirect(url_for('users.list_users'))
+        flash("Você não pode excluir seu próprio usuário.", "warning")
+        return redirect(url_for("users.list_users"))
 
     try:
         log_action(
-            'delete_user',
-            'user',
+            "delete_user",
+            "user",
             user.id,
-            f'Usuário {user.name} excluído',
+            f"Usuário {user.name} excluído",
             company_id=current_user.company_id,
             user_id=current_user.id,
         )
@@ -386,10 +382,10 @@ def delete_user(user_id):
         db.session.delete(user)
         db.session.commit()
 
-        flash('Usuário excluído.', 'success')
+        flash("Usuário excluído.", "success")
 
     except Exception:
         db.session.rollback()
-        flash('Erro ao excluir usuário.', 'danger')
+        flash("Erro ao excluir usuário.", "danger")
 
-    return redirect(url_for('users.list_users'))
+    return redirect(url_for("users.list_users"))

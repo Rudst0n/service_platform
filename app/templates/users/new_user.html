@@ -62,15 +62,14 @@
                                 inputmode="numeric"
                                 autocomplete="off"
                                 value="{{ request.form.get('cpf', '') }}"
+                                oninput="formatCPF(this)"
                             >
                         </div>
 
                         <div class="col-12 col-md-6">
                             <label for="company_role" class="form-label">Perfil</label>
                             <select name="company_role" id="company_role" class="form-select user-input" required>
-                                <option value="">Selecione</option>
-                                <option value="admin_empresa" {% if request.form.get('company_role') == 'admin_empresa' %}selected{% endif %}>Administrador</option>
-                                <option value="funcionario" {% if request.form.get('company_role') == 'funcionario' %}selected{% endif %}>Funcionário</option>
+                                <option value="funcionario" {% if request.form.get('company_role', 'funcionario') == 'funcionario' %}selected{% endif %}>Funcionário</option>
                                 <option value="visualizador" {% if request.form.get('company_role') == 'visualizador' %}selected{% endif %}>Visualizador</option>
                             </select>
                         </div>
@@ -131,4 +130,13 @@
 
 {% block page_scripts %}
 <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+<script>
+function formatCPF(input) {
+    let value = input.value.replace(/\D/g, "").slice(0, 11);
+    value = value.replace(/^(\d{3})(\d)/, "$1.$2");
+    value = value.replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3");
+    value = value.replace(/\.(\d{3})(\d)/, ".$1-$2");
+    input.value = value;
+}
+</script>
 {% endblock %}

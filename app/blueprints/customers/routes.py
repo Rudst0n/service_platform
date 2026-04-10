@@ -2,12 +2,19 @@ from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.blueprints.customers import customers_bp
+from app.models.customer import Customer
+from app.models.service import Service
 from app.services.customer_service import (
     CustomerService,
     CustomerServiceError,
     CustomerValidationError,
 )
-from app.utils.permissions import require_company_role
+from app.utils.permissions import (
+    can_create_customer,
+    can_edit_customer,
+    is_company_admin,
+    is_super_admin,
+)
 
 
 @customers_bp.route("/")
@@ -33,8 +40,11 @@ def list_customers():
 
 @customers_bp.route("/new", methods=["GET", "POST"])
 @login_required
-@require_company_role("admin_empresa", "funcionario")
 def new_customer():
+    if not can_create_customer():
+        flash("Você não tem permissão para cadastrar clientes.", "danger")
+        return redirect(url_for("customers.list_customers"))
+
     form_data = {
         "name": "",
         "phone": "",
@@ -65,8 +75,11 @@ def new_customer():
 
 @customers_bp.route("/edit/<int:customer_id>", methods=["GET", "POST"])
 @login_required
-@require_company_role("admin_empresa", "funcionario")
 def edit_customer(customer_id):
+    if not can_edit_customer():
+        flash("Você não tem permissão para editar clientes.", "danger")
+        return redirect(url_for("customers.list_customers"))
+
     customer = CustomerService.get_or_404(
         customer_id=customer_id,
         company_id=current_user.company_id,
@@ -102,8 +115,11 @@ def edit_customer(customer_id):
 
 @customers_bp.route("/delete/<int:customer_id>", methods=["POST"])
 @login_required
-@require_company_role("admin_empresa")
 def delete_customer(customer_id):
+    if not (is_company_admin() or is_super_admin()):
+        flash("Você não tem permissão para excluir clientes.", "danger")
+        return redirect(url_for("customers.list_customers"))
+
     customer = CustomerService.get_or_404(
         customer_id=customer_id,
         company_id=current_user.company_id,
@@ -120,3 +136,23 @@ def delete_customer(customer_id):
         flash(str(exc), "danger")
 
     return redirect(url_for("customers.list_customers"))
+
+@customers_bp.route("/customers/<int:customer_id>")
+@login_required
+def detail_customer(customer_id):
+
+    customer = Customer.query.filter_by(
+        id=customer_id,
+        company_id=current_user.company_id
+    ).first_or_404()
+
+    services = Service.query.filter_by(
+        customer_id=customer.id,
+        company_id=current_user.company_id
+    ).order_by(Service.created_at.desc()).all()
+
+    return render_template(
+        "customers/detail_customer.html",
+        customer=customer,
+        services=services
+    )
