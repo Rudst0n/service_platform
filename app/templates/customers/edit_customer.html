@@ -40,6 +40,22 @@
                         </div>
 
                         <div class="col-12 col-md-6">
+                            <label for="cpf" class="form-label">CPF</label>
+                            <input
+                                type="text"
+                                name="cpf"
+                                id="cpf"
+                                class="form-control customer-input"
+                                placeholder="000.000.000-00"
+                                maxlength="14"
+                                inputmode="numeric"
+                                autocomplete="off"
+                                value="{{ form_data.cpf if form_data else (customer.cpf or '') }}"
+                                oninput="formatCPF(this)"
+                            >
+                        </div>
+
+                        <div class="col-12 col-md-6">
                             <label for="phone" class="form-label">Telefone</label>
                             <input
                                 type="text"
@@ -53,7 +69,7 @@
                             >
                         </div>
 
-                        <div class="col-12 col-md-6">
+                        <div class="col-12">
                             <label for="email" class="form-label">E-mail</label>
                             <input
                                 type="email"
@@ -97,6 +113,14 @@ function formatPhone(input) {
         value = value.replace(/^(\d*)/, "($1");
     }
 
+    input.value = value;
+}
+
+function formatCPF(input) {
+    let value = input.value.replace(/\D/g, "").slice(0, 11);
+    value = value.replace(/^(\d{3})(\d)/, "$1.$2");
+    value = value.replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3");
+    value = value.replace(/\.(\d{3})(\d)/, ".$1-$2");
     input.value = value;
 }
 </script>

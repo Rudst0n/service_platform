@@ -19,6 +19,40 @@
         </a>
     </div>
 
+    <div class="card companies-list-card mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Acesso principal da empresa</h5>
+
+            {% if admin_user %}
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Administrador</label>
+                    <input type="text" class="form-control" value="{{ admin_user.name }}" disabled>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <label class="form-label">E-mail de acesso</label>
+                    <input type="text" class="form-control" value="{{ admin_user.email }}" disabled>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <form method="POST" action="{{ url_for('admin.reset_company_admin_password', company_id=company.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <label class="form-label d-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-outline-warning w-100" onclick="return confirm('Tem certeza que deseja resetar a senha do administrador desta empresa?');">
+                            Resetar senha do admin
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning mb-0">
+                Esta empresa ainda não possui usuário com perfil de administrador.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
     <div class="card companies-list-card">
         <div class="card-body">
             <form method="POST" class="row g-3">

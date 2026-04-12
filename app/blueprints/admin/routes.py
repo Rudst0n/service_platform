@@ -15,6 +15,7 @@ from app.utils.permissions import require_system_role
 
 
 VALID_PLANS = {"starter", "pro", "business"}
+DEFAULT_COMPANY_ADMIN_PASSWORD = "12345678"
 
 
 def parse_trial_end_date(value):
@@ -40,6 +41,15 @@ def format_cnpj_from_digits(value):
     return f"{digits[:2]}.{digits[2:5]}.{digits[5:8]}/{digits[8:12]}-{digits[12:]}"
 
 
+def get_company_admin_user(company_id):
+    return (
+        User.query
+        .filter_by(company_id=company_id, company_role="admin_empresa")
+        .order_by(User.is_active.desc(), User.id.asc())
+        .first()
+    )
+
+
 @admin_bp.route("/companies")
 @login_required
 @require_system_role("super_admin")
@@ -62,6 +72,7 @@ def list_companies():
         users_count = User.query.filter_by(company_id=company.id).count()
         customers_count = Customer.query.filter_by(company_id=company.id).count()
         services_count = Service.query.filter_by(company_id=company.id).count()
+        admin_user = get_company_admin_user(company.id)
 
         data.append(
             {
@@ -69,6 +80,7 @@ def list_companies():
                 "users": users_count,
                 "customers": customers_count,
                 "services": services_count,
+                "admin_user": admin_user,
             }
         )
 
@@ -85,6 +97,7 @@ def list_companies():
 @require_system_role("super_admin")
 def edit_company(company_id):
     company = Company.query.get_or_404(company_id)
+    admin_user = get_company_admin_user(company.id)
 
     if request.method == "POST":
         name = request.form.get("name", "").strip()
@@ -99,6 +112,7 @@ def edit_company(company_id):
             return render_template(
                 "admin/edit_company.html",
                 company=company,
+                admin_user=admin_user,
                 status_options=CompanyStatus.ALL,
             )
 
@@ -107,6 +121,7 @@ def edit_company(company_id):
             return render_template(
                 "admin/edit_company.html",
                 company=company,
+                admin_user=admin_user,
                 status_options=CompanyStatus.ALL,
             )
 
@@ -115,6 +130,7 @@ def edit_company(company_id):
             return render_template(
                 "admin/edit_company.html",
                 company=company,
+                admin_user=admin_user,
                 status_options=CompanyStatus.ALL,
             )
 
@@ -127,6 +143,7 @@ def edit_company(company_id):
             return render_template(
                 "admin/edit_company.html",
                 company=company,
+                admin_user=admin_user,
                 status_options=CompanyStatus.ALL,
             )
 
@@ -137,6 +154,7 @@ def edit_company(company_id):
                 return render_template(
                     "admin/edit_company.html",
                     company=company,
+                    admin_user=admin_user,
                     status_options=CompanyStatus.ALL,
                 )
 
@@ -154,6 +172,7 @@ def edit_company(company_id):
                 return render_template(
                     "admin/edit_company.html",
                     company=company,
+                    admin_user=admin_user,
                     status_options=CompanyStatus.ALL,
                 )
 
@@ -163,6 +182,7 @@ def edit_company(company_id):
             return render_template(
                 "admin/edit_company.html",
                 company=company,
+                admin_user=admin_user,
                 status_options=CompanyStatus.ALL,
             )
 
@@ -190,8 +210,47 @@ def edit_company(company_id):
     return render_template(
         "admin/edit_company.html",
         company=company,
+        admin_user=admin_user,
         status_options=CompanyStatus.ALL,
     )
+
+
+@admin_bp.route("/companies/<int:company_id>/reset-admin-password", methods=["POST"])
+@login_required
+@require_system_role("super_admin")
+def reset_company_admin_password(company_id):
+    company = Company.query.get_or_404(company_id)
+    admin_user = get_company_admin_user(company.id)
+
+    if not admin_user:
+        flash("Esta empresa não possui usuário administrador cadastrado.", "warning")
+        return redirect(url_for("admin.edit_company", company_id=company.id))
+
+    try:
+        admin_user.set_password(DEFAULT_COMPANY_ADMIN_PASSWORD)
+        admin_user.must_change_password = True
+        admin_user.reset_login_lock()
+
+        log_action(
+            "reset_company_admin_password",
+            "user",
+            admin_user.id,
+            f"Senha do administrador da empresa {company.name} redefinida pelo super admin.",
+            company_id=company.id,
+            user_id=current_user.id,
+        )
+
+        db.session.commit()
+
+        flash(
+            f"Senha do administrador redefinida com sucesso. Nova senha temporária: {DEFAULT_COMPANY_ADMIN_PASSWORD}",
+            "success",
+        )
+    except Exception:
+        db.session.rollback()
+        flash("Erro ao redefinir a senha do administrador da empresa.", "danger")
+
+    return redirect(url_for("admin.edit_company", company_id=company.id))
 
 
 @admin_bp.route("/companies/<int:company_id>/activate", methods=["POST"])

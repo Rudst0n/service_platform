@@ -48,6 +48,7 @@
                     <thead>
                         <tr>
                             <th>Empresa</th>
+                            <th>Admin da empresa</th>
                             <th>Status</th>
                             <th>Plano</th>
                             <th>Usuários</th>
@@ -71,6 +72,17 @@
                                         <div class="companies-meta">{{ item.company.cnpj or "Sem CNPJ" }}</div>
                                     </div>
                                 </div>
+                            </td>
+
+                            <td>
+                                {% if item.admin_user %}
+                                <div class="companies-name-wrap">
+                                    <div class="companies-name">{{ item.admin_user.name }}</div>
+                                    <div class="companies-meta">{{ item.admin_user.email }}</div>
+                                </div>
+                                {% else %}
+                                <span class="text-muted">Sem admin cadastrado</span>
+                                {% endif %}
                             </td>
 
                             <td>
@@ -110,6 +122,15 @@
                                     <a href="{{ url_for('admin.edit_company', company_id=item.company.id) }}" class="btn btn-sm btn-primary">
                                         Editar
                                     </a>
+
+                                    {% if item.admin_user %}
+                                    <form method="POST" action="{{ url_for('admin.reset_company_admin_password', company_id=item.company.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button class="btn btn-sm btn-outline-warning" onclick="return confirm('Tem certeza que deseja resetar a senha do administrador desta empresa?');">
+                                            Resetar senha
+                                        </button>
+                                    </form>
+                                    {% endif %}
 
                                     {% if item.company.status != "active" %}
                                     <form method="POST" action="{{ url_for('admin.activate_company', company_id=item.company.id) }}">
@@ -151,6 +172,16 @@
                             <h5 class="companies-mobile-name mb-1">{{ item.company.name }}</h5>
                             <p class="companies-meta mb-0">{{ item.company.cnpj or "Sem CNPJ" }}</p>
                         </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <strong>Admin da empresa</strong><br>
+                        {% if item.admin_user %}
+                            <span>{{ item.admin_user.name }}</span><br>
+                            <span class="companies-meta">{{ item.admin_user.email }}</span>
+                        {% else %}
+                            <span class="text-muted">Sem admin cadastrado</span>
+                        {% endif %}
                     </div>
 
                     <div class="companies-tags">
@@ -204,6 +235,15 @@
                         <a href="{{ url_for('admin.edit_company', company_id=item.company.id) }}" class="btn btn-primary w-100">
                             Editar empresa
                         </a>
+
+                        {% if item.admin_user %}
+                        <form method="POST" action="{{ url_for('admin.reset_company_admin_password', company_id=item.company.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-outline-warning w-100" onclick="return confirm('Tem certeza que deseja resetar a senha do administrador desta empresa?');">
+                                Resetar senha do admin
+                            </button>
+                        </form>
+                        {% endif %}
 
                         {% if item.company.status != "active" %}
                         <form method="POST" action="{{ url_for('admin.activate_company', company_id=item.company.id) }}">

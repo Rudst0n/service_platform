@@ -32,7 +32,7 @@
                             id="search"
                             name="search"
                             class="form-control customers-search-input"
-                            placeholder="Buscar por nome, telefone ou e-mail"
+                            placeholder="Buscar por nome, CPF, telefone ou e-mail"
                             value="{{ search or '' }}"
                             autocomplete="off"
                         >
@@ -63,6 +63,7 @@
                     <thead>
                         <tr>
                             <th>Nome</th>
+                            <th>CPF</th>
                             <th>Telefone</th>
                             <th>E-mail</th>
                             <th class="text-end">Ações</th>
@@ -82,6 +83,10 @@
                                         <div class="customers-name">{{ customer.name }}</div>
                                     </div>
                                 </div>
+                            </td>
+
+                            <td class="customers-info-cell">
+                                {{ customer.cpf or 'Não informado' }}
                             </td>
 
                             <td class="customers-info-cell">
@@ -106,7 +111,6 @@
 
                             <td class="text-end">
                                 <div class="customers-actions justify-content-end">
-
                                     <a href="{{ url_for('customers.detail_customer', customer_id=customer.id) }}"
                                     class="btn btn-sm btn-outline-secondary">
                                         Ver
@@ -138,7 +142,6 @@
                                         </button>
                                     </form>
                                     {% endif %}
-
                                 </div>
                             </td>
                         </tr>
@@ -157,6 +160,11 @@
 
                         <div class="customers-mobile-main">
                             <h5 class="customers-mobile-name mb-1">{{ customer.name }}</h5>
+
+                            <p class="customers-mobile-meta mb-1">
+                                <strong>CPF:</strong>
+                                {{ customer.cpf or 'Não informado' }}
+                            </p>
 
                             <p class="customers-mobile-meta mb-1">
                                 <strong>Telefone:</strong>
@@ -183,7 +191,6 @@
                     </div>
 
                     <div class="customers-actions mt-3">
-
                         <a href="{{ url_for('customers.detail_customer', customer_id=customer.id) }}"
                         class="btn btn-sm btn-outline-secondary flex-fill customers-mobile-action-btn">
                             Ver
@@ -214,7 +221,6 @@
                             </button>
                         </form>
                         {% endif %}
-
                     </div>
                 </article>
                 {% endfor %}

@@ -142,6 +142,7 @@ def new_user():
                 company_role=company_role,
                 is_active=is_active,
                 email_confirmed=False,
+                must_change_password=False,
             )
             user.set_password(password)
 
@@ -228,6 +229,7 @@ def edit_user(user_id):
 
             if new_password:
                 user.set_password(new_password)
+                user.must_change_password = False
                 user.reset_login_lock()
 
             log_action(
@@ -334,6 +336,7 @@ def reset_user_password(user_id):
 
     try:
         user.set_password(DEFAULT_RESET_PASSWORD)
+        user.must_change_password = True
         user.reset_login_lock()
 
         log_action(
@@ -348,7 +351,7 @@ def reset_user_password(user_id):
         db.session.commit()
 
         flash(
-            f"Senha redefinida. Nova senha: {DEFAULT_RESET_PASSWORD}",
+            f"Senha redefinida. Nova senha temporária: {DEFAULT_RESET_PASSWORD}",
             "success",
         )
 

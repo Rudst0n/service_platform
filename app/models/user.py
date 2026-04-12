@@ -17,6 +17,7 @@ class User(UserMixin, db.Model):
     company_role = db.Column(db.String(50), nullable=False, default="funcionario")
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     email_confirmed = db.Column(db.Boolean, nullable=False, default=False)
+    must_change_password = db.Column(db.Boolean, nullable=False, default=False)
 
     failed_login_attempts = db.Column(db.Integer, nullable=False, default=0)
     locked_until = db.Column(db.DateTime, nullable=True)
