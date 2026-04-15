@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -11,8 +12,15 @@ from app.utils.filters import brl, phone_mask
 from app.utils.security import format_cnpj, format_cpf
 
 
-def create_app(config_name="development"):
+def create_app(config_name=None):
     app = Flask(__name__, instance_relative_config=True)
+
+    if config_name is None:
+        config_name = (
+            os.getenv("APP_ENV")
+            or os.getenv("FLASK_ENV")
+            or "development"
+        ).lower()
 
     config_class = config_by_name.get(config_name, config_by_name["development"])
     app.config.from_object(config_class)
