@@ -8,6 +8,7 @@ from app.models.user import User
 from app.utils.audit import log_action
 from app.utils.normalizer import normalize_email, normalize_text
 from app.utils.permissions import require_company_role
+from app.utils.plan_limits import is_limit_reached
 from app.utils.security import (
     format_cpf,
     is_strong_password,
@@ -94,6 +95,10 @@ def list_users():
 @require_company_role("admin_empresa")
 def new_user():
     if request.method == "POST":
+        if is_limit_reached(current_user.company, User, "users"):
+            flash("Você atingiu o limite de usuários do seu plano.", "warning")
+            return redirect(url_for("users.list_users"))
+
         name = normalize_text(request.form.get("name"))
         email = normalize_email(request.form.get("email"))
         cpf = format_cpf(request.form.get("cpf", ""))

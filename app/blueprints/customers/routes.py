@@ -15,6 +15,7 @@ from app.utils.permissions import (
     is_company_admin,
     is_super_admin,
 )
+from app.utils.plan_limits import is_limit_reached
 
 
 def can_access_customers_area():
@@ -61,9 +62,14 @@ def new_customer():
         "name": "",
         "phone": "",
         "email": "",
+        "cpf": "",
     }
 
     if request.method == "POST":
+        if is_limit_reached(current_user.company, Customer, "customers"):
+            flash("Você atingiu o limite de clientes do seu plano.", "warning")
+            return redirect(url_for("customers.list_customers"))
+
         form_data = CustomerService.normalize_form_data(request.form)
 
         try:
