@@ -18,6 +18,7 @@ class Service(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey("customer.id"), nullable=False)
     company_id = db.Column(db.Integer, db.ForeignKey("company.id"), nullable=False)
     assigned_to_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    created_by_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     finished_at = db.Column(db.DateTime, nullable=True)
@@ -27,6 +28,7 @@ class Service(db.Model):
     customer = db.relationship("Customer", backref="services")
     company = db.relationship("Company", backref="services")
     assigned_to = db.relationship("User", foreign_keys=[assigned_to_id])
+    created_by = db.relationship("User", foreign_keys=[created_by_id])
     images = db.relationship("ServiceImage", backref="service", lazy=True, cascade="all, delete-orphan")
 
     def __repr__(self):

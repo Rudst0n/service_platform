@@ -22,6 +22,7 @@ from app.utils.permissions import (
     can_upload_service_image,
     is_company_admin,
     is_employee,
+    is_viewer,
 )
 from app.utils.plan_limits import is_limit_reached
 from app.utils.storage import save_private_file
@@ -81,6 +82,24 @@ def get_service_or_404(service_id):
     ).first_or_404()
 
 
+def resolve_viewer_customer():
+    customer = None
+
+    if current_user.email:
+        customer = Customer.query.filter_by(
+            company_id=current_user.company_id,
+            email=current_user.email
+        ).first()
+
+    if not customer and current_user.cpf:
+        customer = Customer.query.filter_by(
+            company_id=current_user.company_id,
+            cpf=current_user.cpf
+        ).first()
+
+    return customer
+
+
 def validate_service_form(name, customer_id, assigned_to_id, price_raw):
     if not name or not customer_id:
         return False, "Nome e cliente são obrigatórios.", None, None, None
@@ -132,6 +151,13 @@ def list_services():
             company_id=current_user.company_id,
             assigned_to_id=current_user.id
         ).filter(Service.status != "finalizado")
+
+    elif is_viewer():
+        query = Service.query.filter_by(
+            company_id=current_user.company_id,
+            created_by_id=current_user.id
+        ).filter(Service.status != "finalizado")
+
     else:
         query = Service.query.filter_by(
             company_id=current_user.company_id
@@ -146,7 +172,7 @@ def list_services():
     if status_filter:
         query = query.filter(Service.status == status_filter)
 
-    if customer_filter:
+    if customer_filter and not is_viewer():
         query = query.filter(Service.customer_id == customer_filter)
 
     pagination = (
@@ -162,7 +188,7 @@ def list_services():
         .filter_by(company_id=current_user.company_id)
         .order_by(Customer.name.asc())
         .all()
-    )
+    ) if not is_viewer() else []
 
     service_cards = []
     for service in services:
@@ -216,6 +242,14 @@ def services_history():
             assigned_to_id=current_user.id,
             status="finalizado",
         )
+
+    elif is_viewer():
+        query = Service.query.filter_by(
+            company_id=current_user.company_id,
+            created_by_id=current_user.id,
+            status="finalizado",
+        )
+
     else:
         query = Service.query.filter_by(
             company_id=current_user.company_id,
@@ -228,7 +262,7 @@ def services_history():
             (Service.request_code.ilike(f"%{search}%"))
         )
 
-    if customer_filter:
+    if customer_filter and not is_viewer():
         query = query.filter(Service.customer_id == customer_filter)
 
     pagination = (
@@ -241,7 +275,7 @@ def services_history():
         .filter_by(company_id=current_user.company_id)
         .order_by(Customer.name.asc())
         .all()
-    )
+    ) if not is_viewer() else []
 
     return render_template(
         "services/services_history.html",
@@ -285,6 +319,24 @@ def new_service():
                 name, customer_id, assigned_to_id, price_raw
             )
             assigned_user_id = current_user.id
+
+        elif is_viewer():
+            status = "orcamento"
+            assigned_user_id = None
+            price = None
+
+            customer = resolve_viewer_customer()
+
+            if not name:
+                valid = False
+                error = "Nome do serviço é obrigatório."
+            elif not customer:
+                valid = False
+                error = "Não foi possível identificar seu cadastro de cliente. Cadastre um cliente com o mesmo e-mail ou CPF do seu usuário."
+            else:
+                valid = True
+                error = None
+
         else:
             if status not in VALID_STATUS:
                 status = "orcamento"
@@ -292,6 +344,7 @@ def new_service():
             valid, error, customer, assigned_user, price = validate_service_form(
                 name, customer_id, assigned_to_raw, price_raw
             )
+
             assigned_user_id = assigned_user.id if assigned_user else None
 
         if not valid:
@@ -323,6 +376,7 @@ def new_service():
             customer_id=customer.id,
             company_id=current_user.company_id,
             assigned_to_id=assigned_user_id,
+            created_by_id=current_user.id,
         )
 
         db.session.add(service)

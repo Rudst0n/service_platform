@@ -17,9 +17,21 @@ from app.utils.permissions import (
 )
 
 
+def can_access_customers_area():
+    return (
+        is_super_admin()
+        or is_company_admin()
+        or current_user.company_role == "funcionario"
+    )
+
+
 @customers_bp.route("/")
 @login_required
 def list_customers():
+    if not can_access_customers_area():
+        flash("Você não tem permissão para acessar clientes.", "danger")
+        return redirect(url_for("main.dashboard"))
+
     page = request.args.get("page", 1, type=int)
     search = request.args.get("search", "").strip()
 
@@ -70,7 +82,10 @@ def new_customer():
         except CustomerServiceError as exc:
             flash(str(exc), "danger")
 
-    return render_template("customers/new_customer.html", form_data=form_data)
+    return render_template(
+        "customers/new_customer.html",
+        form_data=form_data,
+    )
 
 
 @customers_bp.route("/edit/<int:customer_id>", methods=["GET", "POST"])
@@ -137,22 +152,26 @@ def delete_customer(customer_id):
 
     return redirect(url_for("customers.list_customers"))
 
+
 @customers_bp.route("/customers/<int:customer_id>")
 @login_required
 def detail_customer(customer_id):
+    if not can_access_customers_area():
+        flash("Você não tem permissão para acessar clientes.", "danger")
+        return redirect(url_for("main.dashboard"))
 
     customer = Customer.query.filter_by(
         id=customer_id,
-        company_id=current_user.company_id
+        company_id=current_user.company_id,
     ).first_or_404()
 
     services = Service.query.filter_by(
         customer_id=customer.id,
-        company_id=current_user.company_id
+        company_id=current_user.company_id,
     ).order_by(Service.created_at.desc()).all()
 
     return render_template(
         "customers/detail_customer.html",
         customer=customer,
-        services=services
+        services=services,
     )

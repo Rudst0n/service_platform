@@ -15,6 +15,8 @@
                 <p class="page-subtitle mb-0">
                     {% if service %}
                         Atualize os dados do serviço
+                    {% elif current_user.company_role == "visualizador" %}
+                        Abra uma nova solicitação
                     {% else %}
                         Cadastre um novo serviço para um cliente
                     {% endif %}
@@ -40,8 +42,14 @@
                         </div>
                         {% endif %}
 
-                        <div class="col-12 col-md-6">
-                            <label for="name" class="form-label">Nome do serviço</label>
+                        <div class="col-12">
+                            <label for="name" class="form-label">
+                                {% if current_user.company_role == "visualizador" %}
+                                    Título da solicitação
+                                {% else %}
+                                    Nome do serviço
+                                {% endif %}
+                            </label>
                             <input
                                 type="text"
                                 name="name"
@@ -52,6 +60,7 @@
                             >
                         </div>
 
+                        {% if current_user.company_role != "visualizador" %}
                         <div class="col-12 col-md-6">
                             <label for="customer_id" class="form-label">Cliente</label>
                             <select name="customer_id" id="customer_id" class="form-select service-input" required>
@@ -63,7 +72,9 @@
                                 {% endfor %}
                             </select>
                         </div>
+                        {% endif %}
 
+                        {% if current_user.company_role != "visualizador" %}
                         <div class="col-12 col-md-6">
                             <label for="price" class="form-label">Preço</label>
                             <input
@@ -75,8 +86,9 @@
                                 value="{{ service.price if service and service.price is not none else '' }}"
                             >
                         </div>
+                        {% endif %}
 
-                        {% if current_user.company_role != "funcionario" %}
+                        {% if current_user.system_role == "super_admin" or current_user.company_role == "admin_empresa" %}
                         <div class="col-12 col-md-6">
                             <label for="status" class="form-label">Status</label>
                             <select name="status" id="status" class="form-select service-input">
@@ -103,7 +115,13 @@
                         {% endif %}
 
                         <div class="col-12">
-                            <label for="description" class="form-label">Descrição</label>
+                            <label for="description" class="form-label">
+                                {% if current_user.company_role == "visualizador" %}
+                                    Descrição / observações
+                                {% else %}
+                                    Descrição
+                                {% endif %}
+                            </label>
                             <textarea
                                 name="description"
                                 id="description"
@@ -119,7 +137,13 @@
                         </a>
 
                         <button type="submit" class="btn btn-primary service-save-btn">
-                            {% if service %}Salvar alterações{% else %}Salvar serviço{% endif %}
+                            {% if service %}
+                                Salvar alterações
+                            {% elif current_user.company_role == "visualizador" %}
+                                Enviar solicitação
+                            {% else %}
+                                Salvar serviço
+                            {% endif %}
                         </button>
                     </div>
                 </form>

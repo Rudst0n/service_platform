@@ -39,6 +39,11 @@ def is_employee(user=None):
     return user.is_authenticated and user.company_role == "funcionario"
 
 
+def is_viewer(user=None):
+    user = _resolve_user(user)
+    return user.is_authenticated and user.company_role == "visualizador"
+
+
 def company_access_is_active(user=None):
     user = _resolve_user(user)
 
@@ -78,7 +83,10 @@ def can_edit_customer(user=None):
 def can_create_service(user=None):
     user = _resolve_user(user)
     return user.is_authenticated and (
-        is_super_admin(user) or is_company_admin(user) or is_employee(user)
+        is_super_admin(user)
+        or is_company_admin(user)
+        or is_employee(user)
+        or is_viewer(user)
     )
 
 
@@ -99,6 +107,9 @@ def can_view_service(service, user=None):
 
     if is_employee(user):
         return service.assigned_to_id == user.id
+
+    if is_viewer(user):
+        return service.created_by_id == user.id
 
     return False
 

@@ -49,10 +49,12 @@
                     <span class="nav-label">Dashboard</span>
                 </a>
 
+                {% if current_user.is_authenticated and current_user.company_role != "visualizador" %}
                 <a class="nav-link {% if current_endpoint == 'customers.list_customers' %}active{% endif %}"
                    href="{{ url_for('customers.list_customers') }}">
                     <span class="nav-label">Clientes</span>
                 </a>
+                {% endif %}
 
                 {% if current_user.is_authenticated and (current_user.system_role == 'super_admin' or current_user.company_role == 'admin_empresa') %}
                 <a class="nav-link {% if current_endpoint == 'users.list_users' %}active{% endif %}"
@@ -131,11 +133,13 @@
                 <span>Início</span>
             </a>
 
+            {% if current_user.is_authenticated and current_user.company_role != "visualizador" %}
             <a href="{{ url_for('customers.list_customers') }}"
                class="{% if current_endpoint == 'customers.list_customers' %}active{% endif %}">
                 <span class="bottom-nav-icon">C</span>
                 <span>Clientes</span>
             </a>
+            {% endif %}
 
             {% if current_user.is_authenticated and (current_user.system_role == 'super_admin' or current_user.company_role == 'admin_empresa') %}
             <a href="{{ url_for('users.list_users') }}"

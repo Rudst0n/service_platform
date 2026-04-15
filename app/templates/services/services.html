@@ -19,7 +19,7 @@
                 Histórico
             </a>
 
-            {% if current_user.system_role == "super_admin" or current_user.company_role in ["admin_empresa", "funcionario"] %}
+            {% if current_user.system_role == "super_admin" or current_user.company_role in ["admin_empresa", "funcionario", "visualizador"] %}
             <a href="{{ url_for('services.new_service') }}" class="btn btn-primary">
                 Novo serviço
             </a>
@@ -122,7 +122,7 @@
                         </p>
                     </div>
 
-                    {% if current_user.company_role != "funcionario" %}
+                    {% if current_user.system_role == "super_admin" or current_user.company_role == "admin_empresa" %}
                     <div class="d-flex gap-2 flex-wrap mb-3">
                         <a
                             href="{{ url_for('services.edit_service', service_id=card.service.id) }}"
@@ -144,6 +144,7 @@
                     </div>
                     {% endif %}
 
+                    {% if current_user.system_role == "super_admin" or current_user.company_role in ["admin_empresa", "funcionario"] %}
                     <form
                         method="POST"
                         action="{{ url_for('services.update_status', service_id=card.service.id) }}"
@@ -175,6 +176,7 @@
                             </div>
                         </div>
                     </form>
+                    {% endif %}
 
                     <div class="plan-box mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -197,6 +199,7 @@
                         </div>
                     </div>
 
+                    {% if current_user.system_role == "super_admin" or current_user.company_role in ["admin_empresa", "funcionario"] %}
                     <div class="upload-box mb-3">
                         <div class="section-header mb-2">
                             <h6 class="mb-1">Enviar imagens</h6>
@@ -244,6 +247,7 @@
                             </button>
                         </form>
                     </div>
+                    {% endif %}
 
                     <div class="gallery-box mt-auto">
                         <div class="section-header mb-3">
@@ -261,6 +265,7 @@
                                     class="gallery-thumb"
                                 >
 
+                                {% if current_user.system_role == "super_admin" or current_user.company_role in ["admin_empresa", "funcionario"] %}
                                 <form
                                     method="POST"
                                     action="{{ url_for('services.delete_image', image_id=image.id) }}"
@@ -276,6 +281,7 @@
                                         ×
                                     </button>
                                 </form>
+                                {% endif %}
                             </div>
                             {% endfor %}
                         </div>
@@ -345,7 +351,7 @@
                 Ver histórico
             </a>
 
-            {% if current_user.system_role == "super_admin" or current_user.company_role in ["admin_empresa", "funcionario"] %}
+            {% if current_user.system_role == "super_admin" or current_user.company_role in ["admin_empresa", "funcionario", "visualizador"] %}
             <a href="{{ url_for('services.new_service') }}" class="btn btn-primary">
                 Cadastrar primeiro serviço
             </a>

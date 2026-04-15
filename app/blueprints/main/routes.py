@@ -20,13 +20,67 @@ def home():
 @login_required
 def dashboard():
     is_super_admin = current_user.system_role == "super_admin"
-    is_employee = current_user.company_role == "funcionario" and not is_super_admin
+    role = current_user.company_role
     company = None if is_super_admin else current_user.company
 
-    if is_employee:
-        if not company:
-            return redirect(url_for("auth.login"))
+    if is_super_admin:
+        total_companies = Company.query.count()
+        total_customers = Customer.query.count()
+        total_services = Service.query.count()
 
+        total_revenue = db.session.query(
+            db.func.coalesce(db.func.sum(Service.price), 0)
+        ).filter(Service.status == "finalizado").scalar()
+
+        latest_services = Service.query.order_by(
+            Service.created_at.desc()
+        ).limit(10).all()
+
+        top_customer = db.session.query(
+            Customer.name,
+            Customer.company_id,
+            db.func.count(Service.id).label("services_count")
+        ).join(
+            Service, Service.customer_id == Customer.id
+        ).group_by(
+            Customer.id, Customer.name, Customer.company_id
+        ).order_by(
+            db.desc("services_count")
+        ).first()
+
+        services_orcamento = Service.query.filter_by(status="orcamento").count()
+        services_aprovado = Service.query.filter_by(status="aprovado").count()
+        services_em_andamento = Service.query.filter_by(status="em_andamento").count()
+        services_finalizado = Service.query.filter_by(status="finalizado").count()
+        services_cancelado = Service.query.filter_by(status="cancelado").count()
+
+        ticket_average = round(
+            float(total_revenue or 0) / services_finalizado, 2
+        ) if services_finalizado > 0 else 0
+
+        return render_template(
+            "dashboard/dashboard.html",
+            company=None,
+            total_companies=total_companies,
+            total_customers=total_customers,
+            total_services=total_services,
+            total_revenue=total_revenue,
+            ticket_average=ticket_average,
+            latest_services=latest_services,
+            top_customer=top_customer,
+            services_orcamento=services_orcamento,
+            services_aprovado=services_aprovado,
+            services_em_andamento=services_em_andamento,
+            services_finalizado=services_finalizado,
+            services_cancelado=services_cancelado,
+            plan_usage=None,
+            is_super_admin=True,
+        )
+
+    if not company:
+        return redirect(url_for("auth.login"))
+
+    if role in ["funcionario", "visualizador"]:
         total_services = Service.query.filter_by(
             company_id=company.id,
             assigned_to_id=current_user.id
@@ -57,85 +111,19 @@ def dashboard():
             Service.created_at.desc()
         ).limit(5).all()
 
-        total_revenue = db.session.query(
-            db.func.coalesce(db.func.sum(Service.price), 0)
-        ).filter(
-            Service.company_id == company.id,
-            Service.assigned_to_id == current_user.id,
-            Service.status == "finalizado"
-        ).scalar()
+        template_name = "dashboard/dashboard_employee.html"
 
-        ticket_average = round(float(total_revenue or 0) / services_finalizado, 2) if services_finalizado > 0 else 0
+        if role == "visualizador":
+            template_name = "dashboard/dashboard_viewer.html"
 
         return render_template(
-            "dashboard/dashboard_employee.html",
+            template_name,
             total_services=total_services,
             services_em_andamento=services_em_andamento,
             services_finalizado=services_finalizado,
             services_pendentes=services_pendentes,
             latest_services=latest_services,
-            total_revenue=total_revenue,
-            ticket_average=ticket_average,
         )
-
-    if is_super_admin:
-        total_companies = Company.query.count()
-        total_customers = Customer.query.count()
-        total_services = Service.query.count()
-
-        total_revenue = db.session.query(
-            db.func.coalesce(db.func.sum(Service.price), 0)
-        ).filter(
-            Service.status == "finalizado"
-        ).scalar()
-
-        latest_services = Service.query.order_by(
-            Service.created_at.desc()
-        ).limit(10).all()
-
-        top_customer = db.session.query(
-            Customer.name,
-            Customer.company_id,
-            db.func.count(Service.id).label("services_count")
-        ).join(
-            Service, Service.customer_id == Customer.id
-        ).group_by(
-            Customer.id,
-            Customer.name,
-            Customer.company_id
-        ).order_by(
-            db.desc("services_count")
-        ).first()
-
-        services_orcamento = Service.query.filter_by(status="orcamento").count()
-        services_aprovado = Service.query.filter_by(status="aprovado").count()
-        services_em_andamento = Service.query.filter_by(status="em_andamento").count()
-        services_finalizado = Service.query.filter_by(status="finalizado").count()
-        services_cancelado = Service.query.filter_by(status="cancelado").count()
-
-        ticket_average = round(float(total_revenue or 0) / services_finalizado, 2) if services_finalizado > 0 else 0
-
-        return render_template(
-            "dashboard/dashboard.html",
-            company=None,
-            total_companies=total_companies,
-            total_customers=total_customers,
-            total_services=total_services,
-            total_revenue=total_revenue,
-            ticket_average=ticket_average,
-            latest_services=latest_services,
-            top_customer=top_customer,
-            services_orcamento=services_orcamento,
-            services_aprovado=services_aprovado,
-            services_em_andamento=services_em_andamento,
-            services_finalizado=services_finalizado,
-            services_cancelado=services_cancelado,
-            plan_usage=None,
-            is_super_admin=True,
-        )
-
-    if not company:
-        return redirect(url_for("auth.login"))
 
     total_customers = Customer.query.filter_by(company_id=company.id).count()
     total_services = Service.query.filter_by(company_id=company.id).count()
@@ -192,7 +180,9 @@ def dashboard():
         status="cancelado"
     ).count()
 
-    ticket_average = round(float(total_revenue or 0) / services_finalizado, 2) if services_finalizado > 0 else 0
+    ticket_average = round(
+        float(total_revenue or 0) / services_finalizado, 2
+    ) if services_finalizado > 0 else 0
 
     plan_usage = get_usage_data(company)
 
