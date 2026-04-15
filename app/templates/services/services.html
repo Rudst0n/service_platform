@@ -258,31 +258,44 @@
                         {% if card.service.images %}
                         <div class="gallery-grid">
                             {% for image in card.service.images %}
-                            <div class="gallery-item">
-                                <img
-                                    src="{{ url_for('protected_uploads.service_image', image_id=image.id) }}"
-                                    alt="Imagem do serviço"
-                                    class="gallery-thumb"
-                                >
+                                <div class="gallery-item">
 
-                                {% if current_user.system_role == "super_admin" or current_user.company_role in ["admin_empresa", "funcionario"] %}
-                                <form
-                                    method="POST"
-                                    action="{{ url_for('services.delete_image', image_id=image.id) }}"
-                                    class="gallery-delete-form"
-                                >
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button
-                                        type="submit"
-                                        class="gallery-delete-btn"
-                                        title="Excluir imagem"
-                                        aria-label="Excluir imagem"
+                                    <span class="badge text-bg-dark gallery-type-badge">
+                                        {% if image.type == "orcamento" %}
+                                            Orçamento
+                                        {% elif image.type == "antes" %}
+                                            Antes
+                                        {% elif image.type == "depois" %}
+                                            Depois
+                                        {% else %}
+                                            Imagem
+                                        {% endif %}
+                                    </span>
+
+                                    <img
+                                        src="{{ url_for('protected_uploads.service_image', image_id=image.id) }}"
+                                        alt="Imagem do serviço"
+                                        class="gallery-thumb"
                                     >
-                                        ×
-                                    </button>
-                                </form>
-                                {% endif %}
-                            </div>
+
+                                    {% if current_user.system_role == "super_admin" or current_user.company_role in ["admin_empresa", "funcionario"] %}
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for('services.delete_image', image_id=image.id) }}"
+                                        class="gallery-delete-form"
+                                    >
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button
+                                            type="submit"
+                                            class="gallery-delete-btn"
+                                            title="Excluir imagem"
+                                            aria-label="Excluir imagem"
+                                        >
+                                            ×
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
                             {% endfor %}
                         </div>
                         {% else %}

@@ -37,15 +37,27 @@ class CustomerService:
     def normalize_form_data(form):
         raw_phone = form.get("phone")
         raw_email = form.get("email")
+        raw_cpf = form.get("cpf")
 
         phone_digits = only_digits(raw_phone)
+        cpf_digits = only_digits(raw_cpf)
+
         normalized_phone = normalize_phone(phone_digits) if phone_digits else None
         normalized_email = normalize_email(raw_email)
+
+        normalized_cpf = None
+        if cpf_digits:
+            if len(cpf_digits) == 11:
+                normalized_cpf = (
+                    f"{cpf_digits[:3]}.{cpf_digits[3:6]}."
+                    f"{cpf_digits[6:9]}-{cpf_digits[9:]}"
+                )
 
         return {
             "name": normalize_text(form.get("name")),
             "phone": normalized_phone,
             "email": normalized_email,
+            "cpf": normalized_cpf,
         }
 
     @staticmethod
@@ -78,6 +90,7 @@ class CustomerService:
         name = data.get("name")
         phone = data.get("phone")
         email = data.get("email")
+        cpf = data.get("cpf")
 
         if not name:
             raise CustomerValidationError("O nome do cliente é obrigatório.")
@@ -92,7 +105,7 @@ class CustomerService:
             phone_digits = only_digits(phone)
 
             if not phone_digits:
-                raise CustomerValidationError("Telefone inválido. Informe apenas números.")
+                raise CustomerValidationError("Telefone inválido.")
 
             if len(phone_digits) not in (10, 11):
                 raise CustomerValidationError("Telefone inválido. Informe um número com DDD.")
@@ -104,6 +117,11 @@ class CustomerService:
             if CustomerService._looks_like_placeholder_email(email):
                 raise CustomerValidationError("Informe um e-mail válido do cliente.")
 
+        if cpf:
+            cpf_digits = only_digits(cpf)
+            if len(cpf_digits) != 11:
+                raise CustomerValidationError("CPF inválido.")
+
     @staticmethod
     def _find_duplicate(company_id, data, ignore_customer_id=None):
         filters = []
@@ -111,15 +129,19 @@ class CustomerService:
         if data.get("email"):
             filters.append(Customer.email == data["email"])
 
+        if data.get("cpf"):
+            filters.append(Customer.cpf == data["cpf"])
+
         phone_digits = only_digits(data.get("phone"))
         if phone_digits:
             customers_same_company = Customer.query.filter_by(company_id=company_id).all()
+
             for customer in customers_same_company:
                 if ignore_customer_id and customer.id == ignore_customer_id:
                     continue
 
                 existing_phone_digits = only_digits(customer.phone)
-                if existing_phone_digits and existing_phone_digits == phone_digits:
+                if existing_phone_digits == phone_digits:
                     return customer
 
         if filters:
@@ -150,17 +172,19 @@ class CustomerService:
             if "@" in search:
                 conditions.append(Customer.email.ilike(f"%{search}%"))
 
-            customers_same_company = Customer.query.filter_by(company_id=company_id).all()
-            matching_ids_by_phone = []
-
             if search_digits:
+                conditions.append(Customer.cpf.ilike(f"%{search}%"))
+
+                customers_same_company = Customer.query.filter_by(company_id=company_id).all()
+                matching_ids_by_phone = []
+
                 for customer in customers_same_company:
                     customer_phone_digits = only_digits(customer.phone)
                     if customer_phone_digits and search_digits in customer_phone_digits:
                         matching_ids_by_phone.append(customer.id)
 
-            if matching_ids_by_phone:
-                conditions.append(Customer.id.in_(matching_ids_by_phone))
+                if matching_ids_by_phone:
+                    conditions.append(Customer.id.in_(matching_ids_by_phone))
 
             query = query.filter(or_(*conditions))
 
@@ -186,16 +210,17 @@ class CustomerService:
     def create_customer(data, company_id, actor_user_id):
         CustomerService.validate_data(data)
 
-        duplicate = CustomerService._find_duplicate(company_id=company_id, data=data)
+        duplicate = CustomerService._find_duplicate(company_id, data)
         if duplicate:
             raise CustomerValidationError(
-                "Já existe um cliente com este telefone ou e-mail cadastrado na empresa."
+                "Já existe um cliente com este telefone, e-mail ou CPF cadastrado na empresa."
             )
 
         customer = Customer(
             name=data["name"],
             phone=data.get("phone"),
             email=data.get("email"),
+            cpf=data.get("cpf"),
             company_id=company_id,
         )
 
@@ -222,14 +247,16 @@ class CustomerService:
             data=data,
             ignore_customer_id=customer.id,
         )
+
         if duplicate:
             raise CustomerValidationError(
-                "Já existe outro cliente com este telefone ou e-mail cadastrado na empresa."
+                "Já existe outro cliente com este telefone, e-mail ou CPF cadastrado na empresa."
             )
 
         customer.name = data["name"]
         customer.phone = data.get("phone")
         customer.email = data.get("email")
+        customer.cpf = data.get("cpf")
 
         db.session.commit()
 
@@ -247,6 +274,7 @@ class CustomerService:
     @staticmethod
     def delete_customer(customer, actor_user_id):
         linked_services = Service.query.filter_by(customer_id=customer.id).count()
+
         if linked_services > 0:
             raise CustomerServiceError(
                 "Este cliente possui serviços vinculados e não pode ser excluído."
