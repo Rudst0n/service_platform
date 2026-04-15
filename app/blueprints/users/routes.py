@@ -4,6 +4,7 @@ from sqlalchemy import or_
 
 from app.blueprints.users import users_bp
 from app.extensions import db
+from app.models import user
 from app.models.user import User
 from app.utils.audit import log_action
 from app.utils.normalizer import normalize_email, normalize_text
@@ -11,6 +12,7 @@ from app.utils.permissions import require_company_role
 from app.utils.plan_limits import is_limit_reached
 from app.utils.security import (
     format_cpf,
+    generate_temporary_password,
     is_strong_password,
     is_valid_email,
     only_digits,
@@ -18,7 +20,6 @@ from app.utils.security import (
 
 ALLOWED_COMPANY_ROLES = {"funcionario", "visualizador"}
 DEFAULT_COMPANY_ROLE = "funcionario"
-DEFAULT_RESET_PASSWORD = "12345678"
 
 
 def get_company_users_query():
@@ -340,7 +341,9 @@ def reset_user_password(user_id):
         return redirect(url_for("users.list_users"))
 
     try:
-        user.set_password(DEFAULT_RESET_PASSWORD)
+        temporary_password = generate_temporary_password()
+
+        user.set_password(temporary_password)
         user.must_change_password = True
         user.reset_login_lock()
 
@@ -356,7 +359,7 @@ def reset_user_password(user_id):
         db.session.commit()
 
         flash(
-            f"Senha redefinida. Nova senha temporária: {DEFAULT_RESET_PASSWORD}",
+            f"Senha redefinida com sucesso. Nova senha temporária: {temporary_password}",
             "success",
         )
 

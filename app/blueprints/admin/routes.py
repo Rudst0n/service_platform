@@ -12,10 +12,10 @@ from app.models.user import User
 from app.utils.audit import log_action
 from app.utils.normalizer import only_digits
 from app.utils.permissions import require_system_role
+from app.utils.security import generate_temporary_password
 
 
 VALID_PLANS = {"starter", "pro", "business"}
-DEFAULT_COMPANY_ADMIN_PASSWORD = "12345678"
 
 
 def parse_trial_end_date(value):
@@ -227,7 +227,9 @@ def reset_company_admin_password(company_id):
         return redirect(url_for("admin.edit_company", company_id=company.id))
 
     try:
-        admin_user.set_password(DEFAULT_COMPANY_ADMIN_PASSWORD)
+        temporary_password = generate_temporary_password()
+
+        admin_user.set_password(temporary_password)
         admin_user.must_change_password = True
         admin_user.reset_login_lock()
 
@@ -243,7 +245,7 @@ def reset_company_admin_password(company_id):
         db.session.commit()
 
         flash(
-            f"Senha do administrador redefinida com sucesso. Nova senha temporária: {DEFAULT_COMPANY_ADMIN_PASSWORD}",
+            f"Senha do administrador redefinida com sucesso. Nova senha temporária: {temporary_password}",
             "success",
         )
     except Exception:

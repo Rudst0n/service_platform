@@ -1,5 +1,7 @@
 import hashlib
 import re
+import secrets
+import string
 
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
@@ -52,6 +54,21 @@ def is_strong_password(password):
     if not re.search(r'\d', password):
         return False, 'A senha deve ter pelo menos um número.'
     return True, None
+
+
+def generate_temporary_password(length=12):
+    uppercase = secrets.choice(string.ascii_uppercase)
+    lowercase = secrets.choice(string.ascii_lowercase)
+    digit = secrets.choice(string.digits)
+
+    remaining_length = max(length - 3, 5)
+    alphabet = string.ascii_letters + string.digits
+    remaining = ''.join(secrets.choice(alphabet) for _ in range(remaining_length))
+
+    password_list = list(uppercase + lowercase + digit + remaining)
+    secrets.SystemRandom().shuffle(password_list)
+
+    return ''.join(password_list)
 
 
 def get_password_fingerprint(password_hash):
