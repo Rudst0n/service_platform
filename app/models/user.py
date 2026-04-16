@@ -14,7 +14,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
 
     system_role = db.Column(db.String(50), nullable=False, default="company_user")
-    company_role = db.Column(db.String(50), nullable=False, default="funcionario")
+    company_role = db.Column(db.String(50), nullable=True)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     email_confirmed = db.Column(db.Boolean, nullable=False, default=False)
     must_change_password = db.Column(db.Boolean, nullable=False, default=False)
@@ -47,7 +47,9 @@ class User(UserMixin, db.Model):
 
     @property
     def is_temporarily_locked(self):
-        return bool(self.locked_until and self.locked_until > datetime.utcnow())
+        return bool(
+            self.locked_until and self.locked_until > datetime.utcnow()
+        )
 
     @property
     def is_super_admin(self):
@@ -60,3 +62,7 @@ class User(UserMixin, db.Model):
     @property
     def is_employee(self):
         return self.company_role == "funcionario"
+
+    @property
+    def is_viewer(self):
+        return self.company_role == "visualizador"

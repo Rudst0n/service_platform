@@ -36,7 +36,7 @@ def create_super_admin(email, name):
         name=name.strip(),
         email=email.strip().lower(),
         system_role="super_admin",
-        company_role="admin_empresa",
+        company_role=None,
         company_id=company.id,
         is_active=True,
     )
