@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from sqlalchemy import func
+
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
@@ -67,20 +69,61 @@ def list_companies():
     )
     companies = pagination.items
 
+    if not companies:
+        return render_template(
+            "admin/companies.html",
+            data=[],
+            pagination=pagination,
+            status_filter=status_filter,
+        )
+
+    company_ids = [company.id for company in companies]
+
+    users_count_map = dict(
+        db.session.query(User.company_id, func.count(User.id))
+        .filter(User.company_id.in_(company_ids))
+        .group_by(User.company_id)
+        .all()
+    )
+
+    customers_count_map = dict(
+        db.session.query(Customer.company_id, func.count(Customer.id))
+        .filter(Customer.company_id.in_(company_ids))
+        .group_by(Customer.company_id)
+        .all()
+    )
+
+    services_count_map = dict(
+        db.session.query(Service.company_id, func.count(Service.id))
+        .filter(Service.company_id.in_(company_ids))
+        .group_by(Service.company_id)
+        .all()
+    )
+
+    admin_users = (
+        User.query
+        .filter(
+            User.company_id.in_(company_ids),
+            User.company_role == "admin_empresa",
+        )
+        .order_by(User.company_id.asc(), User.is_active.desc(), User.id.asc())
+        .all()
+    )
+
+    admin_user_map = {}
+    for user in admin_users:
+        if user.company_id not in admin_user_map:
+            admin_user_map[user.company_id] = user
+
     data = []
     for company in companies:
-        users_count = User.query.filter_by(company_id=company.id).count()
-        customers_count = Customer.query.filter_by(company_id=company.id).count()
-        services_count = Service.query.filter_by(company_id=company.id).count()
-        admin_user = get_company_admin_user(company.id)
-
         data.append(
             {
                 "company": company,
-                "users": users_count,
-                "customers": customers_count,
-                "services": services_count,
-                "admin_user": admin_user,
+                "users": users_count_map.get(company.id, 0),
+                "customers": customers_count_map.get(company.id, 0),
+                "services": services_count_map.get(company.id, 0),
+                "admin_user": admin_user_map.get(company.id),
             }
         )
 
