@@ -39,6 +39,7 @@ def create_app(config_name=None):
     register_template_filters(app)
     register_middlewares(app)
     register_error_handlers(app)
+    register_cli_commands(app)
 
     return app
 
@@ -160,6 +161,10 @@ def register_middlewares(app):
                 db.session.rollback()
 
         return response
+    
+def register_cli_commands(app):
+    from app.cli import register_commands
+    register_commands(app)    
 
 
 def register_error_handlers(app):

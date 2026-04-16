@@ -1,5 +1,6 @@
 import click
 from getpass import getpass
+from flask.cli import with_appcontext
 
 from app.extensions import db
 from app.models.user import User
@@ -9,6 +10,7 @@ from app.models.company import Company, CompanyStatus
 @click.command("create-super-admin")
 @click.option("--email", prompt=True)
 @click.option("--name", prompt=True)
+@with_appcontext
 def create_super_admin(email, name):
     password = getpass("Senha: ")
     confirm = getpass("Confirmar senha: ")
@@ -44,3 +46,7 @@ def create_super_admin(email, name):
     db.session.commit()
 
     click.echo("Super admin criado com sucesso.")
+
+
+def register_commands(app):
+    app.cli.add_command(create_super_admin)
