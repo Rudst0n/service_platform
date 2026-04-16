@@ -159,7 +159,7 @@ def delete_customer(customer_id):
     return redirect(url_for("customers.list_customers"))
 
 
-@customers_bp.route("/customers/<int:customer_id>")
+@customers_bp.route("/<int:customer_id>")
 @login_required
 def detail_customer(customer_id):
     if not can_access_customers_area():
