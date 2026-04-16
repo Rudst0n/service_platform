@@ -11,12 +11,10 @@
 
     <div class="dashboard-header mb-4">
         <div>
-            <h1 class="page-title mb-1">Dashboard</h1>
-            {% if is_super_admin %}
-                <p class="page-subtitle mb-0">Visão geral da plataforma, empresas e andamento dos serviços.</p>
-            {% else %}
-                <p class="page-subtitle mb-0">Visão geral da sua empresa, uso do plano e andamento dos serviços.</p>
-            {% endif %}
+            <h1 class="page-title mb-1">{{ dashboard_title or "Dashboard" }}</h1>
+            <p class="page-subtitle mb-0">
+                {{ dashboard_subtitle or "Visão geral do sistema." }}
+            </p>
         </div>
     </div>
 

@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}Minha agenda de serviços | ServHub{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 {% endblock %}
@@ -10,8 +12,10 @@
 
     <div class="dashboard-header mb-4">
         <div>
-            <h1 class="page-title mb-1">Meu trabalho</h1>
-            <p class="page-subtitle mb-0">Acompanhe os serviços atribuídos a você.</p>
+            <h1 class="page-title mb-1">{{ dashboard_title or "Minha agenda de serviços" }}</h1>
+            <p class="page-subtitle mb-0">
+                {{ dashboard_subtitle or "Acompanhe os serviços atribuídos a você e o andamento das suas atividades." }}
+            </p>
         </div>
     </div>
 

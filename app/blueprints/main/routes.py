@@ -75,12 +75,14 @@ def dashboard():
             services_cancelado=services_cancelado,
             plan_usage=None,
             is_super_admin=True,
+            dashboard_title="Painel global",
+            dashboard_subtitle="Gerencie empresas e acompanhe os indicadores gerais da plataforma.",
         )
 
     if not company:
         return redirect(url_for("auth.login"))
 
-    if role in ["funcionario", "visualizador"]:
+    if role == "funcionario":
         total_services = Service.query.filter_by(
             company_id=company.id,
             assigned_to_id=current_user.id
@@ -111,18 +113,57 @@ def dashboard():
             Service.created_at.desc()
         ).limit(5).all()
 
-        template_name = "dashboard/dashboard_employee.html"
-
-        if role == "visualizador":
-            template_name = "dashboard/dashboard_viewer.html"
-
         return render_template(
-            template_name,
+            "dashboard/dashboard_employee.html",
             total_services=total_services,
             services_em_andamento=services_em_andamento,
             services_finalizado=services_finalizado,
             services_pendentes=services_pendentes,
             latest_services=latest_services,
+            dashboard_title="Minha agenda de serviços",
+            dashboard_subtitle="Acompanhe os serviços atribuídos a você e o andamento das suas atividades.",
+        )
+
+    if role == "visualizador":
+        total_services = Service.query.filter_by(
+            company_id=company.id,
+            created_by_id=current_user.id
+        ).count()
+
+        services_em_andamento = Service.query.filter_by(
+            company_id=company.id,
+            created_by_id=current_user.id,
+            status="em_andamento"
+        ).count()
+
+        services_finalizado = Service.query.filter_by(
+            company_id=company.id,
+            created_by_id=current_user.id,
+            status="finalizado"
+        ).count()
+
+        services_pendentes = Service.query.filter(
+            Service.company_id == company.id,
+            Service.created_by_id == current_user.id,
+            Service.status.in_(["orcamento", "aprovado"])
+        ).count()
+
+        latest_services = Service.query.filter_by(
+            company_id=company.id,
+            created_by_id=current_user.id
+        ).order_by(
+            Service.created_at.desc()
+        ).limit(5).all()
+
+        return render_template(
+            "dashboard/dashboard_viewer.html",
+            total_services=total_services,
+            services_em_andamento=services_em_andamento,
+            services_finalizado=services_finalizado,
+            services_pendentes=services_pendentes,
+            latest_services=latest_services,
+            dashboard_title="Minhas solicitações",
+            dashboard_subtitle="Acompanhe os pedidos que você enviou e veja o status de cada um.",
         )
 
     total_customers = Customer.query.filter_by(company_id=company.id).count()
@@ -203,4 +244,6 @@ def dashboard():
         services_cancelado=services_cancelado,
         plan_usage=plan_usage,
         is_super_admin=False,
+        dashboard_title="Painel da empresa",
+        dashboard_subtitle="Acompanhe clientes, serviços, uso do plano e os principais indicadores da empresa.",
     )

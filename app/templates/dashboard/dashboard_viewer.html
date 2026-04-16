@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Minhas Solicitações | ServHub{% endblock %}
+{% block title %}Minhas solicitações | ServHub{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
@@ -11,9 +11,9 @@
 
     <div class="dashboard-header mb-4">
         <div>
-            <h1 class="page-title mb-1">Minhas solicitações</h1>
+            <h1 class="page-title mb-1">{{ dashboard_title or "Minhas solicitações" }}</h1>
             <p class="page-subtitle mb-0">
-                Acompanhe somente os chamados enviados por você.
+                {{ dashboard_subtitle or "Acompanhe os pedidos que você enviou e veja o status de cada um." }}
             </p>
         </div>
     </div>
