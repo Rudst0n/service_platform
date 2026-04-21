@@ -26,6 +26,7 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <div class="row g-3">
+
                         <div class="col-12">
                             <label for="name" class="form-label">Nome</label>
                             <input
@@ -86,41 +87,9 @@
                                     required
                                 >
 
-                                <button type="button" class="password-toggle" data-toggle-password="password" aria-label="Mostrar ou ocultar senha">
-                                    <svg class="password-eye eye-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                    <svg class="password-eye eye-closed d-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="m3 3 18 18"></path>
-                                        <path d="M10.6 10.7a3 3 0 0 0 4.2 4.2"></path>
-                                        <path d="M9.9 5.1A10.9 10.9 0 0 1 12 5c6.5 0 10 7 10 7a13.2 13.2 0 0 1-2.2 3.1"></path>
-                                        <path d="M6.6 6.7A13.2 13.2 0 0 0 2 12s3.5 7 10 7a10.9 10.9 0 0 0 5.4-1.5"></path>
-                                    </svg>
+                                <button type="button" class="password-toggle" data-toggle-password="password">
+                                    👁
                                 </button>
-                            </div>
-
-                            <div class="password-rules mt-2" data-password-rules="password">
-                                <div class="password-rule" data-rule="length">
-                                    <span class="password-dot"></span>
-                                    <span>Mínimo de 8 caracteres</span>
-                                </div>
-                                <div class="password-rule" data-rule="upper">
-                                    <span class="password-dot"></span>
-                                    <span>Pelo menos 1 letra maiúscula</span>
-                                </div>
-                                <div class="password-rule" data-rule="lower">
-                                    <span class="password-dot"></span>
-                                    <span>Pelo menos 1 letra minúscula</span>
-                                </div>
-                                <div class="password-rule" data-rule="number">
-                                    <span class="password-dot"></span>
-                                    <span>Pelo menos 1 número</span>
-                                </div>
-                                <div class="password-rule" data-rule="special">
-                                    <span class="password-dot"></span>
-                                    <span>Pelo menos 1 caractere especial</span>
-                                </div>
                             </div>
                         </div>
 
@@ -136,23 +105,9 @@
                                     required
                                 >
 
-                                <button type="button" class="password-toggle" data-toggle-password="confirm_password" aria-label="Mostrar ou ocultar confirmação de senha">
-                                    <svg class="password-eye eye-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                    <svg class="password-eye eye-closed d-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="m3 3 18 18"></path>
-                                        <path d="M10.6 10.7a3 3 0 0 0 4.2 4.2"></path>
-                                        <path d="M9.9 5.1A10.9 10.9 0 0 1 12 5c6.5 0 10 7 10 7a13.2 13.2 0 0 1-2.2 3.1"></path>
-                                        <path d="M6.6 6.7A13.2 13.2 0 0 0 2 12s3.5 7 10 7a10.9 10.9 0 0 0 5.4-1.5"></path>
-                                    </svg>
+                                <button type="button" class="password-toggle" data-toggle-password="confirm_password">
+                                    👁
                                 </button>
-                            </div>
-
-                            <div class="password-match mt-2" data-password-match>
-                                <span class="password-dot"></span>
-                                <span>As senhas precisam ser iguais</span>
                             </div>
                         </div>
 
@@ -170,6 +125,7 @@
                                 </label>
                             </div>
                         </div>
+
                     </div>
 
                     <div class="user-form-actions">
@@ -181,6 +137,7 @@
                             Cadastrar funcionário
                         </button>
                     </div>
+
                 </form>
             </div>
         </div>
@@ -189,7 +146,6 @@
 {% endblock %}
 
 {% block page_scripts %}
-<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 <script>
 function formatCPF(input) {
     let value = input.value.replace(/\D/g, "").slice(0, 11);
@@ -198,5 +154,17 @@ function formatCPF(input) {
     value = value.replace(/\.(\d{3})(\d)/, ".$1-$2");
     input.value = value;
 }
+
+document.querySelectorAll(".password-toggle").forEach(button => {
+    button.addEventListener("click", function () {
+        const input = document.getElementById(this.dataset.togglePassword);
+
+        if (input.type === "password") {
+            input.type = "text";
+        } else {
+            input.type = "password";
+        }
+    });
+});
 </script>
 {% endblock %}

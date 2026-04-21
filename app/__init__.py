@@ -12,6 +12,7 @@ from app.utils.filters import brl, phone_mask
 from app.utils.security import format_cnpj, format_cpf
 
 
+
 def create_app(config_name=None):
     app = Flask(__name__, instance_relative_config=True)
 
@@ -52,11 +53,13 @@ def register_blueprints(app):
     from app.blueprints.protected_uploads import protected_uploads_bp
     from app.blueprints.services import services_bp
     from app.blueprints.users import users_bp
+    from app.blueprints.client_portal import client_portal_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(customers_bp, url_prefix="/customers")
     app.register_blueprint(users_bp, url_prefix="/users")
+    app.register_blueprint(client_portal_bp, url_prefix="/client")
     app.register_blueprint(services_bp, url_prefix="/services")
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(protected_uploads_bp, url_prefix="/uploads")
@@ -120,14 +123,19 @@ def register_middlewares(app):
             "static",
         }
 
-        if request.endpoint in public_endpoints:
+        endpoint = request.endpoint
+
+        if not endpoint or endpoint in public_endpoints:
+            return None
+
+        if getattr(current_user, "system_role", None) == "super_admin":
             return None
 
         company = current_user.company
 
         if not company:
             flash("Usuário sem empresa vinculada.", "danger")
-            return redirect(url_for("main.dashboard"))
+            return redirect(url_for("auth.login"))
 
         if not company.is_access_allowed:
             if company.status == CompanyStatus.PENDING:
@@ -141,25 +149,22 @@ def register_middlewares(app):
 
             return redirect(url_for("main.dashboard"))
 
+        now = datetime.utcnow()
+
+        try:
+            if (
+                not company.last_activity_at
+                or (now - company.last_activity_at).total_seconds() > 900
+            ):
+                company.last_activity_at = now
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
+
         return None
 
     @app.after_request
-    def update_last_activity(response):
-        if current_user.is_authenticated:
-            try:
-                company = current_user.company
-                if company:
-                    now = datetime.utcnow()
-
-                    if (
-                        not company.last_activity_at
-                        or (now - company.last_activity_at).total_seconds() > 900
-                    ):
-                        company.last_activity_at = now
-                        db.session.commit()
-            except Exception:
-                db.session.rollback()
-
+    def apply_security_headers(response):
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
@@ -174,12 +179,12 @@ def register_middlewares(app):
             "form-action 'self'; "
             "base-uri 'self';"
         )
-
         return response
-    
+
+
 def register_cli_commands(app):
     from app.cli import register_commands
-    register_commands(app)    
+    register_commands(app)
 
 
 def register_error_handlers(app):

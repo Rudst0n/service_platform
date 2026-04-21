@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Nova solicitação | ServHub{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/client_portal.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="client-portal-page">
+
+    <div class="client-portal-header">
+        <div>
+            <h1 class="client-portal-title">Nova solicitação</h1>
+            <p class="client-portal-subtitle">
+                Descreva o que você precisa e envie sua solicitação.
+            </p>
+        </div>
+
+        <a href="{{ url_for('client_portal.dashboard') }}"
+           class="btn btn-outline-secondary client-back-btn">
+            Voltar
+        </a>
+    </div>
+
+    <section class="client-panel">
+        <div class="client-panel-header">
+            <div class="client-panel-title">Abrir atendimento</div>
+            <p class="client-panel-subtitle">
+                Sua solicitação será enviada para análise da empresa.
+            </p>
+        </div>
+
+        <div class="client-form-wrap">
+            <form method="POST" class="client-service-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                    <label for="name" class="form-label client-form-label">Título</label>
+                    <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        class="form-control client-form-input"
+                        required
+                        maxlength="120"
+                        placeholder="Ex: Manutenção do portão"
+                        value="{{ request.form.get('name', '') }}"
+                    >
+                </div>
+
+                <div class="mb-4">
+                    <label for="description" class="form-label client-form-label">Descrição</label>
+                    <textarea
+                        name="description"
+                        id="description"
+                        rows="5"
+                        class="form-control client-form-input client-form-textarea"
+                        placeholder="Explique com detalhes o que precisa."
+                    >{{ request.form.get('description', '') }}</textarea>
+                </div>
+
+                <div class="client-form-actions">
+                    <a href="{{ url_for('client_portal.dashboard') }}"
+                       class="btn btn-outline-secondary client-form-btn-secondary">
+                        Cancelar
+                    </a>
+
+                    <button type="submit" class="btn btn-primary client-form-btn-primary">
+                        Enviar solicitação
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+</section>
+{% endblock %}

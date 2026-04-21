@@ -5,7 +5,12 @@ from app.extensions import db
 from app.models.customer import Customer
 from app.models.service import Service
 from app.utils.audit import log_action
-from app.utils.normalizer import normalize_email, normalize_phone, normalize_text, only_digits
+from app.utils.normalizer import (
+    normalize_email,
+    normalize_phone,
+    normalize_text,
+    only_digits,
+)
 from app.utils.security import is_valid_email
 
 
@@ -46,18 +51,20 @@ class CustomerService:
         normalized_email = normalize_email(raw_email)
 
         normalized_cpf = None
-        if cpf_digits:
-            if len(cpf_digits) == 11:
-                normalized_cpf = (
-                    f"{cpf_digits[:3]}.{cpf_digits[3:6]}."
-                    f"{cpf_digits[6:9]}-{cpf_digits[9:]}"
-                )
+        if cpf_digits and len(cpf_digits) == 11:
+            normalized_cpf = (
+                f"{cpf_digits[:3]}.{cpf_digits[3:6]}."
+                f"{cpf_digits[6:9]}-{cpf_digits[9:]}"
+            )
 
         return {
             "name": normalize_text(form.get("name")),
             "phone": normalized_phone,
             "email": normalized_email,
             "cpf": normalized_cpf,
+            "is_portal_active": form.get("is_portal_active") == "on",
+            "password": form.get("password", "").strip(),
+            "confirm_password": form.get("confirm_password", "").strip(),
         }
 
     @staticmethod
@@ -91,15 +98,22 @@ class CustomerService:
         phone = data.get("phone")
         email = data.get("email")
         cpf = data.get("cpf")
+        is_portal_active = data.get("is_portal_active")
+        password = data.get("password")
+        confirm_password = data.get("confirm_password")
 
         if not name:
             raise CustomerValidationError("O nome do cliente é obrigatório.")
 
         if len(name) < 3:
-            raise CustomerValidationError("O nome do cliente deve ter pelo menos 3 caracteres.")
+            raise CustomerValidationError(
+                "O nome do cliente deve ter pelo menos 3 caracteres."
+            )
 
         if not phone and not email:
-            raise CustomerValidationError("Informe pelo menos um contato válido: telefone ou e-mail.")
+            raise CustomerValidationError(
+                "Informe pelo menos um contato válido: telefone ou e-mail."
+            )
 
         if phone:
             phone_digits = only_digits(phone)
@@ -108,19 +122,45 @@ class CustomerService:
                 raise CustomerValidationError("Telefone inválido.")
 
             if len(phone_digits) not in (10, 11):
-                raise CustomerValidationError("Telefone inválido. Informe um número com DDD.")
+                raise CustomerValidationError(
+                    "Telefone inválido. Informe um número com DDD."
+                )
 
         if email:
             if not is_valid_email(email):
                 raise CustomerValidationError("E-mail inválido.")
 
             if CustomerService._looks_like_placeholder_email(email):
-                raise CustomerValidationError("Informe um e-mail válido do cliente.")
+                raise CustomerValidationError(
+                    "Informe um e-mail real do cliente."
+                )
 
         if cpf:
             cpf_digits = only_digits(cpf)
+
             if len(cpf_digits) != 11:
                 raise CustomerValidationError("CPF inválido.")
+
+        if is_portal_active:
+            if not email:
+                raise CustomerValidationError(
+                    "Para ativar o portal, informe um e-mail."
+                )
+
+            if not password:
+                raise CustomerValidationError(
+                    "Informe a senha de acesso do portal."
+                )
+
+            if password != confirm_password:
+                raise CustomerValidationError(
+                    "As senhas não conferem."
+                )
+
+            if len(password) < 6:
+                raise CustomerValidationError(
+                    "A senha deve ter no mínimo 6 caracteres."
+                )
 
     @staticmethod
     def _find_duplicate(company_id, data, ignore_customer_id=None):
@@ -134,13 +174,16 @@ class CustomerService:
 
         phone_digits = only_digits(data.get("phone"))
         if phone_digits:
-            customers_same_company = Customer.query.filter_by(company_id=company_id).all()
+            customers_same_company = Customer.query.filter_by(
+                company_id=company_id
+            ).all()
 
             for customer in customers_same_company:
                 if ignore_customer_id and customer.id == ignore_customer_id:
                     continue
 
                 existing_phone_digits = only_digits(customer.phone)
+
                 if existing_phone_digits == phone_digits:
                     return customer
 
@@ -154,6 +197,7 @@ class CustomerService:
                 query = query.filter(Customer.id != ignore_customer_id)
 
             duplicate = query.first()
+
             if duplicate:
                 return duplicate
 
@@ -167,24 +211,39 @@ class CustomerService:
             search = search.strip()
             search_digits = only_digits(search)
 
-            conditions = [Customer.name.ilike(f"%{search}%")]
+            conditions = [
+                Customer.name.ilike(f"%{search}%")
+            ]
 
             if "@" in search:
-                conditions.append(Customer.email.ilike(f"%{search}%"))
+                conditions.append(
+                    Customer.email.ilike(f"%{search}%")
+                )
 
             if search_digits:
-                conditions.append(Customer.cpf.ilike(f"%{search}%"))
+                conditions.append(
+                    Customer.cpf.ilike(f"%{search}%")
+                )
 
-                customers_same_company = Customer.query.filter_by(company_id=company_id).all()
+                customers_same_company = Customer.query.filter_by(
+                    company_id=company_id
+                ).all()
+
                 matching_ids_by_phone = []
 
                 for customer in customers_same_company:
                     customer_phone_digits = only_digits(customer.phone)
-                    if customer_phone_digits and search_digits in customer_phone_digits:
+
+                    if (
+                        customer_phone_digits
+                        and search_digits in customer_phone_digits
+                    ):
                         matching_ids_by_phone.append(customer.id)
 
                 if matching_ids_by_phone:
-                    conditions.append(Customer.id.in_(matching_ids_by_phone))
+                    conditions.append(
+                        Customer.id.in_(matching_ids_by_phone)
+                    )
 
             query = query.filter(or_(*conditions))
 
@@ -211,6 +270,7 @@ class CustomerService:
         CustomerService.validate_data(data)
 
         duplicate = CustomerService._find_duplicate(company_id, data)
+
         if duplicate:
             raise CustomerValidationError(
                 "Já existe um cliente com este telefone, e-mail ou CPF cadastrado na empresa."
@@ -222,7 +282,11 @@ class CustomerService:
             email=data.get("email"),
             cpf=data.get("cpf"),
             company_id=company_id,
+            is_portal_active=data.get("is_portal_active", False),
         )
+
+        if data.get("is_portal_active"):
+            customer.set_password(data["password"])
 
         db.session.add(customer)
         db.session.commit()
@@ -257,6 +321,10 @@ class CustomerService:
         customer.phone = data.get("phone")
         customer.email = data.get("email")
         customer.cpf = data.get("cpf")
+        customer.is_portal_active = data.get("is_portal_active", False)
+
+        if data.get("password"):
+            customer.set_password(data["password"])
 
         db.session.commit()
 
@@ -273,7 +341,9 @@ class CustomerService:
 
     @staticmethod
     def delete_customer(customer, actor_user_id):
-        linked_services = Service.query.filter_by(customer_id=customer.id).count()
+        linked_services = Service.query.filter_by(
+            customer_id=customer.id
+        ).count()
 
         if linked_services > 0:
             raise CustomerServiceError(

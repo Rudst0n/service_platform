@@ -19,6 +19,7 @@
                     <div class="landing-actions">
                         <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg landing-btn-primary">Começar agora</a>
                         <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg landing-btn-secondary">Entrar na plataforma</a>
+                        <a href="{{ url_for('client_portal.login') }}" class="btn btn-outline-light btn-lg landing-btn-secondary">Portal do cliente</a>
                     </div>
 
                     <div class="landing-mini-info">
@@ -101,9 +102,9 @@
 
             <div class="col-12 col-md-6 col-xl-4">
                 <article class="landing-feature-card h-100">
-                    <div class="landing-feature-icon">RL</div>
-                    <h5 class="landing-feature-title">Relatórios e visão geral</h5>
-                    <p class="landing-feature-text">Acompanhe os principais dados da empresa e tenha uma visão mais clara da operação.</p>
+                    <div class="landing-feature-icon">PC</div>
+                    <h5 class="landing-feature-title">Portal do cliente</h5>
+                    <p class="landing-feature-text">Permita que o cliente acompanhe solicitações, serviços e andamento do atendimento em uma área exclusiva.</p>
                 </article>
             </div>
         </div>
@@ -200,6 +201,7 @@
             <div class="landing-actions justify-content-center">
                 <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg landing-btn-primary">Criar conta</a>
                 <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg landing-btn-secondary">Já tenho conta</a>
+                <a href="{{ url_for('client_portal.login') }}" class="btn btn-outline-light btn-lg landing-btn-secondary">Portal do cliente</a>
             </div>
         </div>
     </div>

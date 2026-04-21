@@ -8,6 +8,7 @@
 
 {% block content %}
 <section class="customers-page">
+
     <div class="customers-header">
         <div>
             <h2 class="page-title mb-1">Clientes</h2>
@@ -23,29 +24,27 @@
 
     <div class="card border-0 shadow-sm customers-search-card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ url_for('customers.list_customers') }}" class="customers-search-form">
-                <div class="row g-2 align-items-center">
+            <form method="GET" action="{{ url_for('customers.list_customers') }}">
+                <div class="row g-2">
                     <div class="col-12 col-lg-8">
-                        <label for="search" class="form-label visually-hidden">Buscar cliente</label>
                         <input
                             type="text"
-                            id="search"
                             name="search"
                             class="form-control customers-search-input"
                             placeholder="Buscar por nome, CPF, telefone ou e-mail"
                             value="{{ search or '' }}"
-                            autocomplete="off"
                         >
                     </div>
 
                     <div class="col-6 col-lg-2">
-                        <button type="submit" class="btn btn-primary w-100">
+                        <button class="btn btn-primary w-100">
                             Buscar
                         </button>
                     </div>
 
                     <div class="col-6 col-lg-2">
-                        <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-secondary w-100">
+                        <a href="{{ url_for('customers.list_customers') }}"
+                           class="btn btn-outline-secondary w-100">
                             Limpar
                         </a>
                     </div>
@@ -56,16 +55,18 @@
 
     <div class="card border-0 shadow-sm customers-list-card">
         <div class="card-body">
+
             {% if customers %}
 
             <div class="table-responsive d-none d-md-block">
-                <table class="table table-hover align-middle mb-0 customers-table">
+                <table class="table align-middle customers-table mb-0">
                     <thead>
                         <tr>
                             <th>Nome</th>
                             <th>CPF</th>
                             <th>Telefone</th>
                             <th>E-mail</th>
+                            <th>Portal</th>
                             <th class="text-end">Ações</th>
                         </tr>
                     </thead>
@@ -73,77 +74,53 @@
                     <tbody>
                         {% for customer in customers %}
                         <tr>
+
+                            <td>{{ customer.name }}</td>
+
+                            <td>{{ customer.cpf or 'Não informado' }}</td>
+
+                            <td>{{ customer.phone or 'Não informado' }}</td>
+
+                            <td>{{ customer.email or 'Não informado' }}</td>
+
                             <td>
-                                <div class="customers-name-cell">
-                                    <div class="customers-avatar">
-                                        {{ customer.name[:1]|upper if customer.name else '?' }}
-                                    </div>
-
-                                    <div class="customers-name-wrap">
-                                        <div class="customers-name">{{ customer.name }}</div>
-                                    </div>
-                                </div>
-                            </td>
-
-                            <td class="customers-info-cell">
-                                {{ customer.cpf or 'Não informado' }}
-                            </td>
-
-                            <td class="customers-info-cell">
-                                {% if customer.phone %}
-                                    <a href="tel:{{ customer.phone }}" class="customers-contact-link">
-                                        {{ customer.phone }}
-                                    </a>
+                                {% if customer.is_portal_active %}
+                                    <span class="badge bg-success">Ativo</span>
                                 {% else %}
-                                    <span class="text-muted">Não informado</span>
-                                {% endif %}
-                            </td>
-
-                            <td class="customers-info-cell">
-                                {% if customer.email %}
-                                    <a href="mailto:{{ customer.email }}" class="customers-contact-link">
-                                        {{ customer.email }}
-                                    </a>
-                                {% else %}
-                                    <span class="text-muted">Não informado</span>
+                                    <span class="badge bg-secondary">Desligado</span>
                                 {% endif %}
                             </td>
 
                             <td class="text-end">
                                 <div class="customers-actions justify-content-end">
+
                                     <a href="{{ url_for('customers.detail_customer', customer_id=customer.id) }}"
-                                    class="btn btn-sm btn-outline-secondary">
+                                       class="btn btn-sm btn-outline-secondary">
                                         Ver
                                     </a>
 
-                                    {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario'] %}
-                                    <a
-                                        href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}"
-                                        class="btn btn-sm btn-outline-primary"
-                                    >
+                                    <a href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}"
+                                       class="btn btn-sm btn-outline-primary">
                                         Editar
                                     </a>
-                                    {% endif %}
 
                                     {% if current_user.system_role == 'super_admin' or current_user.company_role == 'admin_empresa' %}
-                                    <form
-                                        method="POST"
-                                        action="{{ url_for('customers.delete_customer', customer_id=customer.id) }}"
-                                        class="customers-delete-form d-inline"
-                                        onsubmit="return confirm('Tem certeza que deseja excluir este cliente?');"
-                                    >
+                                    <form method="POST"
+                                          action="{{ url_for('customers.delete_customer', customer_id=customer.id) }}"
+                                          class="d-inline"
+                                          onsubmit="return confirm('Excluir cliente?');">
+
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                                        <button
-                                            type="submit"
-                                            class="btn btn-sm btn-outline-danger"
-                                        >
+                                        <button class="btn btn-sm btn-outline-danger">
                                             Excluir
                                         </button>
                                     </form>
                                     {% endif %}
+
                                 </div>
                             </td>
+
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -151,140 +128,53 @@
             </div>
 
             <div class="d-md-none customers-mobile-list">
+
                 {% for customer in customers %}
                 <article class="customers-mobile-card">
-                    <div class="customers-mobile-top">
-                        <div class="customers-avatar">
-                            {{ customer.name[:1]|upper if customer.name else '?' }}
-                        </div>
 
-                        <div class="customers-mobile-main">
-                            <h5 class="customers-mobile-name mb-1">{{ customer.name }}</h5>
+                    <h5 class="mb-2">{{ customer.name }}</h5>
 
-                            <p class="customers-mobile-meta mb-1">
-                                <strong>CPF:</strong>
-                                {{ customer.cpf or 'Não informado' }}
-                            </p>
+                    <p class="mb-1"><strong>CPF:</strong> {{ customer.cpf or 'Não informado' }}</p>
+                    <p class="mb-1"><strong>Telefone:</strong> {{ customer.phone or 'Não informado' }}</p>
+                    <p class="mb-1"><strong>E-mail:</strong> {{ customer.email or 'Não informado' }}</p>
 
-                            <p class="customers-mobile-meta mb-1">
-                                <strong>Telefone:</strong>
-                                {% if customer.phone %}
-                                    <a href="tel:{{ customer.phone }}" class="customers-contact-link">
-                                        {{ customer.phone }}
-                                    </a>
-                                {% else %}
-                                    <span class="text-muted">Não informado</span>
-                                {% endif %}
-                            </p>
+                    <p class="mb-3">
+                        <strong>Portal:</strong>
+                        {% if customer.is_portal_active %}
+                            <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Desligado</span>
+                        {% endif %}
+                    </p>
 
-                            <p class="customers-mobile-meta mb-0">
-                                <strong>E-mail:</strong>
-                                {% if customer.email %}
-                                    <a href="mailto:{{ customer.email }}" class="customers-contact-link">
-                                        {{ customer.email }}
-                                    </a>
-                                {% else %}
-                                    <span class="text-muted">Não informado</span>
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
+                    <div class="customers-actions">
 
-                    <div class="customers-actions mt-3">
                         <a href="{{ url_for('customers.detail_customer', customer_id=customer.id) }}"
-                        class="btn btn-sm btn-outline-secondary flex-fill customers-mobile-action-btn">
+                           class="btn btn-sm btn-outline-secondary flex-fill">
                             Ver
                         </a>
 
-                        {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario'] %}
-                        <a
-                            href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}"
-                            class="btn btn-sm btn-outline-primary flex-fill customers-mobile-action-btn"
-                        >
+                        <a href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}"
+                           class="btn btn-sm btn-outline-primary flex-fill">
                             Editar
                         </a>
-                        {% endif %}
 
-                        {% if current_user.system_role == 'super_admin' or current_user.company_role == 'admin_empresa' %}
-                        <form
-                            method="POST"
-                            action="{{ url_for('customers.delete_customer', customer_id=customer.id) }}"
-                            class="customers-delete-form flex-fill"
-                            onsubmit="return confirm('Tem certeza que deseja excluir este cliente?');"
-                        >
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button
-                                type="submit"
-                                class="btn btn-sm btn-outline-danger w-100 customers-mobile-action-btn"
-                            >
-                                Excluir
-                            </button>
-                        </form>
-                        {% endif %}
                     </div>
+
                 </article>
                 {% endfor %}
+
             </div>
-
-            {% if pagination and pagination.pages > 1 %}
-            <nav class="mt-4" aria-label="Paginação de clientes">
-                <ul class="pagination justify-content-center mb-0">
-                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-                        <a
-                            class="page-link"
-                            href="{{ url_for('customers.list_customers', page=pagination.prev_num, search=search) if pagination.has_prev else '#' }}"
-                        >
-                            Anterior
-                        </a>
-                    </li>
-
-                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
-                        {% if page_num %}
-                            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
-                                <a class="page-link" href="{{ url_for('customers.list_customers', page=page_num, search=search) }}">
-                                    {{ page_num }}
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link">...</span>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-
-                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-                        <a
-                            class="page-link"
-                            href="{{ url_for('customers.list_customers', page=pagination.next_num, search=search) if pagination.has_next else '#' }}"
-                        >
-                            Próxima
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-            {% endif %}
 
             {% else %}
-            <div class="empty-state">
-                {% if search %}
-                    <h5>Nenhum cliente encontrado para “{{ search }}”</h5>
-                    <p>Tente buscar com outro termo ou limpe o filtro para ver todos os clientes cadastrados.</p>
-                    <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-secondary">
-                        Limpar busca
-                    </a>
-                {% else %}
-                    <h5>Nenhum cliente encontrado</h5>
-                    <p>Você ainda não tem clientes cadastrados.</p>
-
-                    {% if current_user.system_role == 'super_admin' or current_user.company_role in ['admin_empresa', 'funcionario'] %}
-                    <a href="{{ url_for('customers.new_customer') }}" class="btn btn-primary">
-                        Cadastrar primeiro cliente
-                    </a>
-                    {% endif %}
-                {% endif %}
+            <div class="empty-state text-center">
+                <h5>Nenhum cliente encontrado</h5>
+                <p>Cadastre o primeiro cliente para começar.</p>
             </div>
             {% endif %}
+
         </div>
     </div>
+
 </section>
 {% endblock %}

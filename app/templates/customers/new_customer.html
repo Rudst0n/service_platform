@@ -9,23 +9,27 @@
 {% block content %}
 <section class="customer-form-page">
     <div class="customer-form-wrapper">
-        <div class="customer-form-header">
+
+        <div class="customer-form-header d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
                 <h2 class="page-title mb-1">Novo cliente</h2>
-                <p class="page-subtitle mb-0">Cadastre um novo cliente para sua empresa</p>
+                <p class="page-subtitle mb-0">Cadastre um cliente e libere o portal se desejar</p>
             </div>
 
-            <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-secondary customer-back-btn">
+            <a href="{{ url_for('customers.list_customers') }}"
+               class="btn btn-outline-secondary customer-back-btn">
                 Voltar
             </a>
         </div>
 
         <div class="card border-0 shadow-sm customer-form-card">
             <div class="card-body">
+
                 <form method="POST" class="customer-form">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <div class="row g-3">
+
                         <div class="col-12">
                             <label for="name" class="form-label">Nome</label>
                             <input
@@ -34,7 +38,6 @@
                                 id="name"
                                 class="form-control customer-input"
                                 placeholder="Digite o nome do cliente"
-                                autocomplete="name"
                                 value="{{ form_data.name if form_data else '' }}"
                                 required
                             >
@@ -47,10 +50,7 @@
                                 name="cpf"
                                 id="cpf"
                                 class="form-control customer-input"
-                                placeholder="000.000.000-00"
                                 maxlength="14"
-                                inputmode="numeric"
-                                autocomplete="off"
                                 value="{{ form_data.cpf if form_data else '' }}"
                                 oninput="formatCPF(this)"
                             >
@@ -63,9 +63,7 @@
                                 name="phone"
                                 id="phone"
                                 class="form-control customer-input"
-                                placeholder="(41) 99999-9999"
                                 maxlength="15"
-                                inputmode="numeric"
                                 value="{{ form_data.phone if form_data else '' }}"
                                 oninput="formatPhone(this)"
                             >
@@ -79,30 +77,98 @@
                                 id="email"
                                 class="form-control customer-input"
                                 placeholder="Digite o e-mail"
-                                autocomplete="email"
                                 value="{{ form_data.email if form_data else '' }}"
                             >
                         </div>
+
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    id="is_portal_active"
+                                    name="is_portal_active"
+                                    {% if form_data and form_data.is_portal_active %}checked{% endif %}
+                                >
+
+                                <label class="form-check-label" for="is_portal_active">
+                                    Ativar portal do cliente
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="password" class="form-label">Senha</label>
+
+                            <div class="position-relative">
+                                <input
+                                    type="password"
+                                    name="password"
+                                    id="password"
+                                    class="form-control customer-input pe-5"
+                                >
+
+                                <button
+                                    type="button"
+                                    class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2"
+                                    onclick="togglePassword('password')"
+                                >
+                                    👁
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label for="confirm_password" class="form-label">Confirmar senha</label>
+
+                            <div class="position-relative">
+                                <input
+                                    type="password"
+                                    name="confirm_password"
+                                    id="confirm_password"
+                                    class="form-control customer-input pe-5"
+                                >
+
+                                <button
+                                    type="button"
+                                    class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2"
+                                    onclick="togglePassword('confirm_password')"
+                                >
+                                    👁
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div class="customer-form-actions">
-                        <a href="{{ url_for('customers.list_customers') }}" class="btn btn-outline-secondary customer-cancel-btn">
+                    <div class="customer-form-actions mt-4">
+                        <a href="{{ url_for('customers.list_customers') }}"
+                           class="btn btn-outline-secondary customer-cancel-btn">
                             Cancelar
                         </a>
 
-                        <button type="submit" class="btn btn-primary customer-save-btn">
+                        <button type="submit"
+                                class="btn btn-primary customer-save-btn">
                             Salvar cliente
                         </button>
                     </div>
+
                 </form>
+
             </div>
         </div>
+
     </div>
 </section>
 {% endblock %}
 
 {% block page_scripts %}
 <script>
+function togglePassword(id) {
+    const input = document.getElementById(id);
+    input.type = input.type === "password" ? "text" : "password";
+}
+
 function formatPhone(input) {
     let value = input.value.replace(/\D/g, "").slice(0, 11);
 
@@ -111,9 +177,7 @@ function formatPhone(input) {
     } else if (value.length > 6) {
         value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, "($1) $2-$3");
     } else if (value.length > 2) {
-        value = value.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
-    } else if (value.length > 0) {
-        value = value.replace(/^(\d*)/, "($1");
+        value = value.replace(/^(\d{2})(\d+)/, "($1) $2");
     }
 
     input.value = value;

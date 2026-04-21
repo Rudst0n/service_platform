@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Minha Área | ServHub{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/client_portal.css') }}">
+{% endblock %}
+
+{% block content %}
+{% set total_services = services|length %}
+{% set total_orcamento = services|selectattr('status', 'equalto', 'orcamento')|list|length %}
+{% set total_em_andamento = services|selectattr('status', 'equalto', 'em_andamento')|list|length %}
+{% set total_finalizado = services|selectattr('status', 'equalto', 'finalizado')|list|length %}
+
+<section class="client-portal-page">
+
+    <div class="client-portal-header">
+        <div>
+            <h1 class="client-portal-title">Olá, {{ customer.name }}</h1>
+            <p class="client-portal-subtitle">Acompanhe seus serviços e o andamento dos seus atendimentos.</p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('client_portal.new_service') }}" class="btn btn-primary client-new-service-btn">
+                Nova solicitação
+            </a>
+
+            <form method="POST" action="{{ url_for('client_portal.logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-danger client-logout-btn">
+                    Sair
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="client-summary-grid">
+        <article class="client-summary-card">
+            <div class="client-summary-label">Total de serviços</div>
+            <div class="client-summary-value">{{ total_services }}</div>
+        </article>
+
+        <article class="client-summary-card">
+            <div class="client-summary-label">Orçamentos</div>
+            <div class="client-summary-value">{{ total_orcamento }}</div>
+        </article>
+
+        <article class="client-summary-card">
+            <div class="client-summary-label">Em andamento</div>
+            <div class="client-summary-value">{{ total_em_andamento }}</div>
+        </article>
+
+        <article class="client-summary-card">
+            <div class="client-summary-label">Finalizados</div>
+            <div class="client-summary-value">{{ total_finalizado }}</div>
+        </article>
+    </div>
+
+    <section class="client-panel">
+        <div class="client-panel-header">
+            <div class="client-panel-title">Meus serviços</div>
+            <p class="client-panel-subtitle">Veja abaixo os serviços vinculados ao seu cadastro.</p>
+        </div>
+
+        {% if services %}
+            <div class="table-responsive client-table-wrap">
+                <table class="table client-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Serviço</th>
+                            <th>Status</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for service in services %}
+                        <tr>
+                            <td>
+                                <span class="client-service-code">
+                                    {{ service.request_code or 'Sem código' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="client-service-name">
+                                    {{ service.name }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="client-status-pill client-status-{{ service.status }}">
+                                    {{ service.status|replace('_', ' ')|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="client-date">
+                                    {{ service.created_at.strftime('%d/%m/%Y') if service.created_at else '-' }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="client-mobile-list">
+                {% for service in services %}
+                <article class="client-mobile-card">
+                    <div class="client-mobile-code">
+                        {{ service.request_code or 'Sem código' }}
+                    </div>
+
+                    <div class="client-mobile-name">
+                        {{ service.name }}
+                    </div>
+
+                    <div class="client-mobile-meta">
+                        <strong>Status:</strong>
+                        <span class="client-status-pill client-status-{{ service.status }}">
+                            {{ service.status|replace('_', ' ')|title }}
+                        </span>
+                    </div>
+
+                    <div class="client-mobile-meta">
+                        <strong>Data:</strong>
+                        {{ service.created_at.strftime('%d/%m/%Y') if service.created_at else '-' }}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="client-empty-state">
+                <div class="client-empty-title">Nenhum serviço encontrado</div>
+                <p class="client-empty-text mb-3">Quando houver serviços vinculados ao seu cadastro, eles aparecerão aqui.</p>
+                <a href="{{ url_for('client_portal.new_service') }}" class="btn btn-primary">
+                    Criar primeira solicitação
+                </a>
+            </div>
+        {% endif %}
+    </section>
+
+</section>
+{% endblock %}

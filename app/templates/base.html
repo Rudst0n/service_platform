@@ -17,9 +17,19 @@
     {% block extra_css %}{% endblock %}
 </head>
 
-{% set public_endpoints = ['main.home', 'auth.login', 'auth.register', 'auth.forgot_password', 'auth.reset_password'] %}
+{% set public_endpoints = [
+    'main.home',
+    'auth.login',
+    'auth.register',
+    'auth.forgot_password',
+    'auth.reset_password',
+    'client_portal.login'
+] %}
+
 {% set current_endpoint = request.endpoint or '' %}
-{% set is_internal_page = current_endpoint not in public_endpoints %}
+{% set is_client_portal = current_endpoint.startswith('client_portal.') %}
+{% set is_internal_page = (current_endpoint not in public_endpoints) and not is_client_portal %}
+{% set is_public_page = not is_internal_page and not is_client_portal %}
 
 <body class="{% if is_internal_page %}internal-page{% else %}public-page{% endif %}">
     <div class="app-layout">
@@ -74,10 +84,6 @@
                     <span class="nav-label">Empresas</span>
                 </a>
                 {% endif %}
-
-                <a class="nav-link" href="#">
-                    <span class="nav-label">Relatórios</span>
-                </a>
             </nav>
 
             <div class="sidebar-logout">
@@ -119,17 +125,22 @@
         {% endif %}
 
         <main class="main-area {% if not is_internal_page %}main-area-public{% endif %}">
-            <div class="{% if is_internal_page %}page-card{% else %}page-card page-card-public{% endif %}">
-                {% include "components/alerts.html" %}
-                {% block content %}{% endblock %}
+            {% if is_internal_page %}
+            <div class="page-card">
+            {% endif %}
+
+            {% include "components/alerts.html" %}
+            {% block content %}{% endblock %}
+
+            {% if is_internal_page %}
             </div>
+            {% endif %}
         </main>
 
         {% if is_internal_page %}
         <nav class="bottom-nav">
-
             <a href="{{ url_for('main.dashboard') }}"
-            class="{% if current_endpoint == 'main.dashboard' %}active{% endif %}">
+               class="{% if current_endpoint == 'main.dashboard' %}active{% endif %}">
                 <span class="bottom-nav-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 10.5L12 3l9 7.5"></path>
@@ -141,7 +152,7 @@
 
             {% if current_user.is_authenticated and current_user.company_role != "visualizador" %}
             <a href="{{ url_for('customers.list_customers') }}"
-            class="{% if current_endpoint == 'customers.list_customers' %}active{% endif %}">
+               class="{% if current_endpoint == 'customers.list_customers' %}active{% endif %}">
                 <span class="bottom-nav-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
@@ -156,7 +167,7 @@
 
             {% if current_user.is_authenticated and (current_user.system_role == 'super_admin' or current_user.company_role == 'admin_empresa') %}
             <a href="{{ url_for('users.list_users') }}"
-                class="{% if current_endpoint == 'users.list_users' %}active{% endif %}">
+               class="{% if current_endpoint == 'users.list_users' %}active{% endif %}">
                 <span class="bottom-nav-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="4" y="3" width="16" height="18" rx="2"></rect>
@@ -169,7 +180,7 @@
             {% endif %}
 
             <a href="{{ url_for('services.list_services') }}"
-            class="{% if current_endpoint == 'services.list_services' %}active{% endif %}">
+               class="{% if current_endpoint == 'services.list_services' %}active{% endif %}">
                 <span class="bottom-nav-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M14.7 6.3a1 1 0 0 1 1.4 0l1.6 1.6a1 1 0 0 1 0 1.4l-8.8 8.8L5 19l1-3.9 8.7-8.8z"></path>
@@ -180,7 +191,7 @@
 
             {% if current_user.is_authenticated and current_user.system_role == 'super_admin' %}
             <a href="{{ url_for('admin.list_companies') }}"
-            class="{% if current_endpoint == 'admin.list_companies' %}active{% endif %}">
+               class="{% if current_endpoint == 'admin.list_companies' %}active{% endif %}">
                 <span class="bottom-nav-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="4" width="18" height="16" rx="2"></rect>
@@ -190,17 +201,6 @@
                 <span>Empresas</span>
             </a>
             {% endif %}
-
-            <a href="#">
-                <span class="bottom-nav-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 3v18h18"></path>
-                        <path d="M7 15l4-4 3 3 5-6"></path>
-                    </svg>
-                </span>
-                <span>Relatórios</span>
-            </a>
-
         </nav>
         {% endif %}
 
