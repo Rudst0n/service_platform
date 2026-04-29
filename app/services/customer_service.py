@@ -93,7 +93,11 @@ class CustomerService:
         return False
 
     @staticmethod
-    def validate_data(data):
+    def _customer_already_has_portal_password(customer):
+        return bool(customer and customer.password_hash)
+
+    @staticmethod
+    def validate_data(data, existing_customer=None):
         name = data.get("name")
         phone = data.get("phone")
         email = data.get("email")
@@ -141,17 +145,26 @@ class CustomerService:
             if len(cpf_digits) != 11:
                 raise CustomerValidationError("CPF inválido.")
 
-        if is_portal_active:
-            if not email:
-                raise CustomerValidationError(
-                    "Para ativar o portal, informe um e-mail."
-                )
+        if not is_portal_active:
+            return
 
-            if not password:
-                raise CustomerValidationError(
-                    "Informe a senha de acesso do portal."
-                )
+        if not email:
+            raise CustomerValidationError(
+                "Para ativar o portal, informe um e-mail."
+            )
 
+        customer_has_password = CustomerService._customer_already_has_portal_password(
+            existing_customer
+        )
+
+        password_was_filled = bool(password or confirm_password)
+
+        if not customer_has_password and not password:
+            raise CustomerValidationError(
+                "Informe a senha de acesso do portal."
+            )
+
+        if password_was_filled:
             if password != confirm_password:
                 raise CustomerValidationError(
                     "As senhas não conferem."
@@ -304,7 +317,10 @@ class CustomerService:
 
     @staticmethod
     def update_customer(customer, data, actor_user_id):
-        CustomerService.validate_data(data)
+        CustomerService.validate_data(
+            data=data,
+            existing_customer=customer,
+        )
 
         duplicate = CustomerService._find_duplicate(
             company_id=customer.company_id,
@@ -323,7 +339,7 @@ class CustomerService:
         customer.cpf = data.get("cpf")
         customer.is_portal_active = data.get("is_portal_active", False)
 
-        if data.get("password"):
+        if customer.is_portal_active and data.get("password"):
             customer.set_password(data["password"])
 
         db.session.commit()
