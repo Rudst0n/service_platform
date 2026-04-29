@@ -23,14 +23,16 @@ document.addEventListener("DOMContentLoaded", function () {
         loginInput.addEventListener("input", function (e) {
             const value = e.target.value;
 
-            if (/[a-zA-Z@]/.test(value)) {
+            if (isEmailLike(value)) {
                 return;
             }
 
             e.target.value = formatCPF(value);
         });
 
-        loginInput.value = formatCPF(loginInput.value);
+        if (loginInput.value && !isEmailLike(loginInput.value)) {
+            loginInput.value = formatCPF(loginInput.value);
+        }
     }
 
     initPasswordRules();
@@ -40,6 +42,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function onlyDigits(value) {
     return (value || "").replace(/\D/g, "");
+}
+
+function isEmailLike(value) {
+    return /[a-zA-Z@]/.test(value || "");
 }
 
 function formatCPF(value) {
@@ -140,12 +146,26 @@ function initPasswordToggle() {
 
             if (input.type === "password") {
                 input.type = "text";
-                if (eyeOpen) eyeOpen.classList.add("d-none");
-                if (eyeClosed) eyeClosed.classList.remove("d-none");
-            } else {
-                input.type = "password";
-                if (eyeOpen) eyeOpen.classList.remove("d-none");
-                if (eyeClosed) eyeClosed.classList.add("d-none");
+
+                if (eyeOpen) {
+                    eyeOpen.classList.add("d-none");
+                }
+
+                if (eyeClosed) {
+                    eyeClosed.classList.remove("d-none");
+                }
+
+                return;
+            }
+
+            input.type = "password";
+
+            if (eyeOpen) {
+                eyeOpen.classList.remove("d-none");
+            }
+
+            if (eyeClosed) {
+                eyeClosed.classList.add("d-none");
             }
         });
     });
@@ -165,10 +185,11 @@ function initPasswordMatch() {
         const equal = bothFilled && password.value === confirm.value;
 
         box.classList.toggle("is-valid", equal);
-        box.classList.toggle("is-invalid", !equal);
+        box.classList.toggle("is-invalid", bothFilled && !equal);
     }
 
     password.addEventListener("input", validate);
     confirm.addEventListener("input", validate);
+
     validate();
 }
